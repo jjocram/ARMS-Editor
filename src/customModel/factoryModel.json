@@ -1,0 +1,158 @@
+{
+  "name": "Factory",
+  "uri": "http://factory/bpi/bpmn",
+  "prefix": "factory",
+  "xml": {
+    "tagAlias": "lowerCase"
+  },
+  "types": [
+    {
+      "name": "Executor",
+      "superClass": [
+        "bpmn:Task"
+      ],
+      "properties": [
+        {
+          "name": "product",
+          "type": "Product",
+          "isMany": true
+        }
+      ]
+    },
+    {
+      "name": "Connection",
+      "superClass": [
+        "bpmn:SequenceFlow"
+      ],
+      "properties": []
+    },
+    {
+      "name": "TransformationInput",
+      "superClass": [
+        "Element"
+      ],
+      "properties": [
+        {
+          "name": "id",
+          "isAttr": true,
+          "type": "String"
+        },
+        {
+          "name": "productType",
+          "isAttr": true,
+          "type": "String"
+        },
+        {
+          "name": "quantity",
+          "isAttr": true,
+          "type": "Integer"
+        }
+      ]
+    },
+    {
+      "name": "TransformationOutput",
+      "superClass": [
+        "Element"
+      ],
+      "properties": [
+        {
+          "name": "id",
+          "isAttr": true,
+          "type": "String"
+        },
+        {
+          "name": "productType",
+          "isAttr": true,
+          "type": "String"
+        },
+        {
+          "name": "quantity",
+          "isAttr": true,
+          "type": "Integer"
+        }
+      ]
+    },
+    {
+      "name": "Transformation",
+      "superClass": [
+        "Element"
+      ],
+      "properties": [
+        {
+          "name": "id",
+          "isAttr": true,
+          "type": "String"
+        },
+        {
+          "name": "activityId",
+          "isAttr": true,
+          "isReference": true,
+          "type": "String"
+        },
+        {
+          "name": "productId",
+          "isAttr": true,
+          "type": "String"
+        },
+        {
+          "name": "inputs",
+          "type": "TransformationInput",
+          "isMany": true
+        },
+        {
+          "name": "outputs",
+          "type": "TransformationOutput",
+          "isMany": true
+        }
+
+      ]
+    },
+    {
+      "name": "Product",
+      "superClass": [
+        "Element"
+      ],
+      "properties": [
+        {
+          "name": "id",
+          "isAttr": true,
+          "type": "String"
+        },
+        {
+          "name": "name",
+          "isAttr": true,
+          "type": "String"
+        },
+        {
+          "name": "time",
+          "isAttr": true,
+          "type": "String"
+        },
+        {
+          "name": "timeUnit",
+          "isAttr": true,
+          "type": "String"
+        },
+        {
+          "name": "batch",
+          "isAttr": true,
+          "type": "String"
+        },
+        {
+          "name": "idActivity",
+          "isAttr": true,
+          "type": "String"
+        }
+      ]
+    },
+    {
+      "name": "Batch",
+      "superClass": [
+        "bpmn:Task"
+      ],
+      "properties": []
+    }
+  ],
+  "enumerations": [],
+  "associations": []
+}

@@ -3,6 +3,12 @@ import Modeler from "bpmn-js/lib/Modeler";
 import {useEffect, useRef} from "react";
 import {ModelerRefContext} from "./ModelerContext.ts";
 import MenuBar from "./components/MenuBar/MenuBar.tsx";
+import customModdleExtension from "./customModel/factoryModel.json"
+import bpmnExtension from './BPMNExtensions';
+
+import lintModule from "bpmn-js-bpmnlint";
+import bpmnlintConfig from "./linting/.bpmnlintrc";
+import "./linting/bpmn-js-bpmnlint.css";
 
 function App() {
     const modelerRef = useRef<Modeler | null>(null);
@@ -12,6 +18,18 @@ function App() {
         if (!modelerRef.current && container) {
             modelerRef.current = new Modeler({
                 container: container,
+                keyboard: { bindTo: document.body },
+                moddleExtensions: {
+                    factory: customModdleExtension
+                },
+                linting: {
+                  bpmnlint: bpmnlintConfig,
+                  active: true,
+                },
+                additionalModules: [
+                    bpmnExtension,
+                    lintModule
+                ]
             })
             console.log("Modeler initialized")
         }
