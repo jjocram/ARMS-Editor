@@ -8,7 +8,7 @@ function MenuBar({setXmlDiagramToEmpty}) {
     const modelerRef = useModelerRef();
 
     function downloadDiagram() {
-        modelerRef?.current?.saveXML({format: true})
+        modelerRef.modeler.current?.saveXML({format: true})
             .then(res => {
                 const a = document.createElement('a');
                 const file = new Blob([res.xml ?? ""], {type: 'application/xml'});
@@ -29,7 +29,7 @@ function MenuBar({setXmlDiagramToEmpty}) {
 
         const reader = new FileReader();
         reader.onload = () => {
-            modelerRef?.current?.importXML(reader.result as string)
+            modelerRef.modeler.current?.importXML(reader.result as string)
         }
         reader.onerror = () => {
             console.log(reader.error)
