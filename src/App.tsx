@@ -16,6 +16,9 @@ import lintModule from "bpmn-js-bpmnlint";
 import bpmnlintConfig from "./linting/.bpmnlintrc";
 import "./linting/bpmn-js-bpmnlint.css";
 import PropertiesDrawer from "./components/PropertiesDrawer/PropertiesDrawer.tsx";
+import {is} from "bpmn-js/lib/util/ModelUtil";
+import Product from "./Models/Product.ts";
+import {ElementRegistry} from "bpmn-js/lib/features/auto-place/BpmnAutoPlaceUtil";
 
 function App() {
     const modelerRef = useRef<Modeler | null>(null);
@@ -42,9 +45,10 @@ function App() {
                 ]
             })
             modelerRef.current.on('element.dblclick', 1500, handleSelectionChange);
+            modelerRef.current.on('root.set', setupModelData)
 
             modelerContext.modeler = modelerRef;
-            modelerContext.products = [] // TODO: read from productList
+            modelerContext.finalProducts = new Map<string, Product>()
             console.log("Modeler initialized")
         }
     }
@@ -55,8 +59,23 @@ function App() {
         event.stopPropagation();
     }
 
+    function setupModelData() {
+        console.log("Model changed... setting up model's data");
+        const elementRegistry = modelerRef.current?.get("elementRegistry") as ElementRegistry;
+        const processElement = elementRegistry.find(element => element.type === "bpmn:Process");
+        if (processElement) {
+            const extensionElements = processElement.businessObject.get("extensionElements").values;
+            const finalProducts = extensionElements
+                .filter((element: Shape) => is(element, "factory:Product"))
+                .map((element: Shape) => new Product(element.id, element.name))
+                .map((product: Product) => [product.id, product]);
+
+            modelerContext.finalProducts = new Map(finalProducts);
+        }
+    }
+
     function setXmlDiagramToEmpty() {
-        fetch("/empty_diagram.bpmn")
+        fetch("/diagram.bpmn")
             .then(res => res.text())
             .then(data => modelerRef.current?.importXML(data))
             .catch(err => console.log(err));

@@ -1,6 +1,7 @@
 import Modeler from "bpmn-js/lib/Modeler";
 import Modeling from "bpmn-js/lib/features/modeling/Modeling";
 import {Shape} from "bpmn-js/lib/model/Types.ts";
+import {ElementRegistry} from "bpmn-js/lib/features/auto-place/BpmnAutoPlaceUtil";
 
 export class BaseElement {
     id: string;
@@ -17,12 +18,12 @@ export class BaseElement {
 
         this.id = shape.id;
         this.type = shape.type;
-        this.name = shape.name ?? "";
+        this.name = shape.name ?? shape.businessObject.name ?? "";
     }
 
     save(modeler: Modeler): void {
         const modeling = modeler.get('modeling') as Modeling;
-        const elementInModel = modeler.get('elementRegistry').get(this.id) as Shape;
+        const elementInModel = (modeler.get('elementRegistry') as ElementRegistry).get(this.id) as Shape;
         modeling.updateProperties(elementInModel, {...this});
     }
 
@@ -35,12 +36,10 @@ export class BaseElement {
     }
 
     needCompatibilities(): boolean {
-        const compatibilityTypes: Array<string> = ["bpmn:Task", "factory:batch"]
-        return compatibilityTypes.includes(this.type);
+        return false
     }
 
     needTransformations(): boolean {
-        const transformationTypes: Array<string> = ["bpmn:Task", "factory:batch"]
-        return transformationTypes.includes(this.type);
+        return false;
     }
 }

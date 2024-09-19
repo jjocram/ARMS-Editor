@@ -1,8 +1,10 @@
-import {Accordion, Drawer, Input, InputGroup, Stack} from "rsuite";
+import {Accordion, Drawer, Input, InputGroup, Stack, Tree} from "rsuite";
 import {useEffect, useState} from "react";
 import {useModelerRef} from "../../ModelerContext.ts";
 import {BaseElement} from "../../Models/BaseElement.ts";
 import {Shape} from "bpmn-js/lib/model/Types.ts";
+import {ActivityElement} from "../../Models/ActivityElement.ts";
+import {ExecutorElement} from "../../Models/ExecutorElement.ts";
 
 interface PropertiesDrawerProps {
     shape: Shape | null,
@@ -16,7 +18,13 @@ function PropertiesDrawer({shape, isOpen, setIsOpen}: PropertiesDrawerProps) {
 
     useEffect(() => {
         if (shape !== null) {
-            setElement(new BaseElement(shape));
+            if (ActivityElement.elementTypes.includes(shape.type)) {
+                setElement(new ActivityElement(shape, modelerRef.modeler.current!, modelerRef.finalProducts));
+            } else if (shape.type === "factory:Executor") {
+                setElement(new ExecutorElement(shape, modelerRef.finalProducts));
+            } else {
+                setElement(new BaseElement(shape));
+            }
         }
     }, [shape])
 
@@ -31,17 +39,18 @@ function PropertiesDrawer({shape, isOpen, setIsOpen}: PropertiesDrawerProps) {
     }
 
     function handleSaveElement() {
-        console.log(modelerRef.modeler)
         element.save(modelerRef.modeler.current!);
         setIsOpen(false);
     }
 
     function renderCompatibilities() {
         if (element.needCompatibilities()) {
+            const executors = (element as ActivityElement).connectedExecutors
+                .map(executor => executor.toTreeNode());
             return (
                 <>
                     <Accordion.Panel header="Compatibilities">
-                        <p>Text</p>
+                        <Tree data={executors} />
                     </Accordion.Panel>
                 </>
             );
