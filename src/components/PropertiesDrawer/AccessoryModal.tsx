@@ -22,6 +22,9 @@ export default function AccessoryModal({showModal, setShowModal, executor, execu
         if (executorAccessory) {
             setAccessory(modelContext.availableAccessories.get(executorAccessory.id));
             setRequiredQuantity(executorAccessory.quantity);
+        } else {
+            setAccessory(undefined);
+            setRequiredQuantity(undefined);
         }
     }, [executorAccessory]);
 

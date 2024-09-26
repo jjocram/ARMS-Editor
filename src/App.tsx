@@ -20,6 +20,7 @@ import {is} from "bpmn-js/lib/util/ModelUtil";
 import Product from "./Models/Product.ts";
 import {ElementRegistry} from "bpmn-js/lib/features/auto-place/BpmnAutoPlaceUtil";
 import {Accessory} from "./Models/Accessory.ts";
+import {Transformation, TransformationIO} from "./Models/Transformation.ts";
 
 function App() {
     const modelerRef = useRef<Modeler | null>(null);
@@ -51,6 +52,8 @@ function App() {
             modelerContext.modeler = modelerRef;
             modelerContext.finalProducts = new Map<string, Product>();
             modelerContext.availableAccessories = new Map<string, Accessory>();
+            modelerContext.transformationProducts = new Map<string, Product>();
+            modelerContext.transformations = new Map<string, Transformation>()
             console.log("Modeler initialized")
         }
     }
@@ -79,6 +82,38 @@ function App() {
                 .map((element: Shape) => new Accessory(element.id, element.name, element.quantity))
                 .map((accessory: Accessory) => [accessory.id, accessory]);
             modelerContext.availableAccessories = new Map(availableAccessories);
+
+            const transformationProducts = extensionElements
+                .filter((element: Shape) => is(element, "factory:Transformation"))
+                .map((element: Shape) => [...element.inputs ?? [], ...element.outputs ?? []])
+                .flatMap((element: Shape) => element)
+                .flatMap((element: Shape) => new Product(element.id, element.productType))
+                .map((product: Product) => [product.id, product]);
+            modelerContext.transformationProducts = new Map(transformationProducts);
+
+            const transformations = extensionElements
+                .filter((element: Shape) => is(element, "factory:Transformation"))
+                .map((element: Shape) => new Transformation(element.id, element.activityId, modelerContext.finalProducts.get(element.productId)!))
+                .map((transformation: Transformation) => [transformation.id, transformation]);
+            modelerContext.transformations = new Map(transformations);
+            modelerContext.transformations.forEach((transformation: Transformation) => {
+                const inputs = extensionElements
+                    .filter((element: Shape) => is(element, "factory:Transformation"))
+                    .filter((element: Shape) => element.id === transformation.id)
+                    .map((element: Shape) => element.inputs ?? [])
+                    .flatMap((element: Shape) => element)
+                    .flatMap((element: Shape) => new TransformationIO(element.id, element.productType, element.quantity));
+
+                const outputs = extensionElements
+                    .filter((element: Shape) => is(element, "factory:Transformation"))
+                    .filter((element: Shape) => element.id === transformation.id)
+                    .map((element: Shape) => element.outputs ?? [])
+                    .flatMap((element: Shape) => element)
+                    .flatMap((element: Shape) => new TransformationIO(element.id, element.productType, element.quantity));
+
+                transformation.inputs = inputs;
+                transformation.outputs = outputs;
+            });
         }
     }
 

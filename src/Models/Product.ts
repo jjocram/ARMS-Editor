@@ -24,11 +24,12 @@ export default class Product {
         const moddle = modeler.get("moddle") as Moddle;
         const elementRegistry = modeler.get("elementRegistry") as ElementRegistry;
         const processElement = elementRegistry.find(element => element.type === "bpmn:Process") as Shape;
-        const extensionElements = processElement.businessObject.get("extensionElements")
+        const extensionElements = processElement.businessObject.get("extensionElements");
 
-        const newProduct = moddle.create("factory:Product");
-        newProduct.id = this.id;
-        newProduct.name = this.name;
+        const newProduct = moddle.create("factory:Product", {
+            id: this.id,
+            name: this.name,
+        });
 
         extensionElements.get("values").push(newProduct);
     }

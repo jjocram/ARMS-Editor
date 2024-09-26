@@ -10,6 +10,9 @@ import CompatibilityModal from "./CompatibilityModal.tsx";
 import {ButtonTreeNode} from "../ButtonTreeNode.ts";
 import {ExecutorAccessory} from "../../Models/Accessory.ts";
 import AccessoryModal from "./AccessoryModal.tsx";
+import {TreeNode} from "rsuite/cjs/internals/Tree/types";
+import {Transformation, TransformationIO} from "../../Models/Transformation.ts";
+import TransformationModal from "./TransformationModal.tsx";
 
 interface PropertiesDrawerProps {
     shape: Shape | null,
@@ -27,6 +30,9 @@ function PropertiesDrawer({shape, isOpen, setIsOpen}: PropertiesDrawerProps) {
 
     const [showAccessoryModal, setShowAccessoryModal] = useState<boolean>(false);
     const [selectedAccessory, setSelectedAccessory] = useState<ExecutorAccessory | undefined>(undefined);
+
+    const [showTransformationModal, setShowTransformationModal] = useState<boolean>(false);
+    const [selectedTransformation, setSelectedTransformation] = useState<Transformation | undefined>(undefined);
 
     useEffect(() => {
         if (shape !== null) {
@@ -120,12 +126,69 @@ function PropertiesDrawer({shape, isOpen, setIsOpen}: PropertiesDrawerProps) {
         }
     }
 
+    function renderLabelForTransformation(element: TreeNode) {
+        if (element.children) {
+            return element.label;
+        }
+
+        const dataLabel = element.label as string;
+
+        if (dataLabel.startsWith("button")) {
+            const buttonType = dataLabel.split("@")[1];
+            if (buttonType.startsWith("Activity")) {
+                // Render button for completely new Transformation
+                return (<Button onClick={() => {setShowTransformationModal(true); setSelectedTransformation(undefined)}}>Add transformation for a product</Button>)
+            } else if (buttonType.startsWith("Inputs")) {
+                // Render button for adding a new product to inputs
+                const transformationId = dataLabel.split("@")[2];
+                const transformation = modelerRef.transformations.get(transformationId);
+                return (<Button onClick={() => {setSelectedTransformation(transformation); setShowTransformationModal(true)}}>Add a new product to inputs</Button>)
+            } else if (buttonType.startsWith("Outputs")) {
+                // Render button for adding a new product to outputs
+                const transformationId = dataLabel.split("@")[2];
+                const transformation = modelerRef.transformations.get(transformationId);
+                return (<Button onClick={() => {setSelectedTransformation(transformation); setShowTransformationModal(true)}}>Add a new product to outputs</Button>)
+            } else {
+                throw new Error(`Type of button ${dataLabel} in transformation not recognized`)
+            }
+        }
+
+        const transformationIOJSON = JSON.parse(dataLabel);
+        const transformationIO = new TransformationIO(
+            transformationIOJSON["id"],
+            transformationIOJSON["productType"],
+            transformationIOJSON["quantity"],
+        );
+        return (
+            <Grid fluid>
+                <Row className="show-grid, disable-double-click" onDoubleClick={() => {
+                    const trasformationId = (element.value! as string).split("@")[1];
+                    const transformation = modelerRef.transformations.get(trasformationId);
+                    setSelectedTransformation(transformation);
+                    setShowTransformationModal(true);
+                }}>
+                    <Col>{transformationIO.productType}</Col>
+                    <Col>{transformationIO.quantity}</Col>
+                </Row>
+            </Grid>
+        )
+    }
+
     function renderTransformations() {
         if (element.needTransformations()) {
+            const activityElement = element as ActivityElement;
+            const transformations = [...modelerRef.transformations.values()]
+                .filter(transformation => transformation.activityId === activityElement.id)
+                .map(transformation => transformation.toTreeNode());
+            transformations.push(ButtonTreeNode(activityElement.id))
+
             return (
                 <>
                     <Accordion.Panel header="Transformations">
-                        <p>Text</p>
+                        <Tree data={transformations} renderTreeNode={treeNode => {
+                            return (renderLabelForTransformation(treeNode))
+                        }}/>
+                        <TransformationModal showModal={showTransformationModal} setShowModal={setShowTransformationModal} activity={activityElement} transformation={selectedTransformation}/>
                     </Accordion.Panel>
                 </>
             );

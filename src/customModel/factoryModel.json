@@ -114,7 +114,6 @@
         {
           "name": "activityId",
           "isAttr": true,
-          "isReference": true,
           "type": "String"
         },
         {

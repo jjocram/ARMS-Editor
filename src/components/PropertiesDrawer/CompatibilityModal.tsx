@@ -5,7 +5,7 @@ import {useEffect, useState} from "react";
 import {ExecutorElement} from "../../Models/ExecutorElement.ts";
 import {ActivityElement} from "../../Models/ActivityElement.ts";
 import {useModelerRef} from "../../ModelerContext.ts";
-import {generateId} from "../../Utils.ts";
+import ProductPicker from "../ProductPicker.tsx";
 
 
 interface CompatibilityModalProps {
@@ -24,9 +24,13 @@ export default function CompatibilityModal({showModal, setShowModal, executor, p
 
     useEffect(() => {
         if (productExecutor) {
-            setProduct(new Product(productExecutor?.id!, productExecutor?.name!));
+            setProduct(modelContext.finalProducts.get(productExecutor.id));
             setTime(productExecutor?.time);
             setTimeUnit(productExecutor?.timeUnit);
+        } else {
+            setProduct(undefined);
+            setTime(undefined);
+            setTimeUnit(undefined);
         }
     }, [productExecutor]);
 
@@ -51,26 +55,14 @@ export default function CompatibilityModal({showModal, setShowModal, executor, p
     }
 
     function canSave(): boolean {
-        if (!product || !time) {
+        if (!product || !time || !timeUnit) {
             return false;
         }
 
         return true
     }
 
-    function handleNewProductCreation(value: string) {
-        const newProduct = new Product(generateId("Product"), value as string);
-        newProduct.createInModel(modelContext.modeler.current!);
-        modelContext.finalProducts.set(newProduct.id, newProduct);
-        setProduct(newProduct);
-    }
 
-    function handleProductChange(value: string) {
-        const newProduct = modelContext.finalProducts.get(value)
-        if (newProduct) {
-            setProduct(newProduct);
-        }
-    }
 
     return (
         <Modal backdrop="static" keyboard={false} open={showModal} onClose={() => closeModal(false)}>
@@ -92,7 +84,7 @@ export default function CompatibilityModal({showModal, setShowModal, executor, p
 
                 <InputGroup>
                     <InputGroup.Addon>Product</InputGroup.Addon>
-                    <InputPicker style={{width: "100%"}} creatable data={[...modelContext.finalProducts.values()].map(p => p.toItemDataType())} onCreate={handleNewProductCreation} value={product?.id} onChange={handleProductChange}/>
+                    <ProductPicker product={product!} setProduct={setProduct} whichTypes="final"/>
                 </InputGroup>
 
                 <InputGroup>
