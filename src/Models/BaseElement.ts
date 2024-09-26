@@ -42,4 +42,8 @@ export class BaseElement {
     needTransformations(): boolean {
         return false;
     }
+
+    needAccessories(): boolean {
+        return false;
+    }
 }

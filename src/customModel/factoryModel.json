@@ -16,6 +16,34 @@
           "name": "product",
           "type": "Product",
           "isMany": true
+        },
+        {
+          "name": "accessories",
+          "type": "Accessory",
+          "isMany": true
+        }
+      ]
+    },
+    {
+      "name": "Accessory",
+      "superclass": [
+        "Element"
+      ],
+      "properties": [
+        {
+          "name": "id",
+          "isAttr": true,
+          "type": "String"
+        },
+        {
+          "name": "name",
+          "isAttr": true,
+          "type": "String"
+        },
+        {
+          "name": "quantity",
+          "isAttr": true,
+          "type": "String"
         }
       ]
     },

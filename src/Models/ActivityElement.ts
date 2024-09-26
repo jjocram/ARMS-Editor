@@ -23,7 +23,7 @@ export class ActivityElement extends BaseElement {
             .filter(connection => connection.source.id === this.id || connection.target.id === this.id) // take only the connections which have this activity as source or target
             .map(connection => connection.source.id === this.id ? connection.target : connection.source) // pick the element which is not this activity
             .filter(element => is(element, "factory:Executor")) // take only the factory:Executors elements (maybe for future extensions)
-            .map(element => new ExecutorElement(element, finalProducts)); // transform into ExecutorElement
+            .map(element => new ExecutorElement(element, finalProducts, this.id)); // transform into ExecutorElement
     }
 
     override needCompatibilities(): boolean {

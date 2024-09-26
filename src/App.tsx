@@ -19,6 +19,7 @@ import PropertiesDrawer from "./components/PropertiesDrawer/PropertiesDrawer.tsx
 import {is} from "bpmn-js/lib/util/ModelUtil";
 import Product from "./Models/Product.ts";
 import {ElementRegistry} from "bpmn-js/lib/features/auto-place/BpmnAutoPlaceUtil";
+import {Accessory} from "./Models/Accessory.ts";
 
 function App() {
     const modelerRef = useRef<Modeler | null>(null);
@@ -48,7 +49,8 @@ function App() {
             modelerRef.current.on('root.set', setupModelData)
 
             modelerContext.modeler = modelerRef;
-            modelerContext.finalProducts = new Map<string, Product>()
+            modelerContext.finalProducts = new Map<string, Product>();
+            modelerContext.availableAccessories = new Map<string, Accessory>();
             console.log("Modeler initialized")
         }
     }
@@ -60,17 +62,23 @@ function App() {
     }
 
     function setupModelData() {
-        console.log("Model changed... setting up model's data");
         const elementRegistry = modelerRef.current?.get("elementRegistry") as ElementRegistry;
         const processElement = elementRegistry.find(element => element.type === "bpmn:Process");
         if (processElement) {
+            console.log("Model changed... setting up model's data");
             const extensionElements = processElement.businessObject.get("extensionElements").values;
+
             const finalProducts = extensionElements
                 .filter((element: Shape) => is(element, "factory:Product"))
                 .map((element: Shape) => new Product(element.id, element.name))
                 .map((product: Product) => [product.id, product]);
-
             modelerContext.finalProducts = new Map(finalProducts);
+
+            const availableAccessories = extensionElements
+                .filter((element: Shape) => is(element, "factory:Accessory"))
+                .map((element: Shape) => new Accessory(element.id, element.name, element.quantity))
+                .map((accessory: Accessory) => [accessory.id, accessory]);
+            modelerContext.availableAccessories = new Map(availableAccessories);
         }
     }
 
