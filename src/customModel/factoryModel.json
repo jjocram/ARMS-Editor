@@ -169,6 +169,11 @@
           "name": "idActivity",
           "isAttr": true,
           "type": "String"
+        },
+        {
+          "name": "quantity",
+          "isAttr": true,
+          "type": "String"
         }
       ]
     },

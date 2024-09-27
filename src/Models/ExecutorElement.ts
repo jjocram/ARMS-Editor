@@ -50,12 +50,14 @@ export class ExecutorElement extends BaseElement {
             if (productToChange) {
                 productToChange.time = product.time;
                 productToChange.timeUnit = product.timeUnit;
+                productToChange.batch = product.batchQuantity;
                 return productToChange;
             } else {
                 const newProduct = moddle.create("factory:Product");
                 newProduct.id = product.id;
                 newProduct.name = product.name;
                 newProduct.time = product.time;
+                newProduct.batch = product.batchQuantity;
                 newProduct.timeUnit = product.timeUnit;
                 newProduct.idActivity = product.idActivity;
                 return newProduct;

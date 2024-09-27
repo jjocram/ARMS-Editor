@@ -15,23 +15,26 @@ export default function ProductPicker({product, setProduct, whichTypes}: Product
     function getProducts(): Array<Product> {
         switch (whichTypes) {
             case "all":
-                return [...modelContext.allProducts.values()]
+                return [...modelContext.products.values()];
             case "final":
-                return [...modelContext.finalProducts.values()]
+                return modelContext.finalProducts;
             case "transformation":
-                return [...modelContext.transformationProducts.values()]
+                return modelContext.transformationProducts;
         }
     }
 
     function handleNewProductCreation(value: string) {
-        const newProduct = new Product(generateId("Product"), value as string); // TODO: generate product with right ID (TransformationIO) and not save it in extensionsElements if is transformations
+        const newProduct = new Product(generateId("Product"), value as string);
+        if (whichTypes === "final") {
+            newProduct.finalQuantity = 1;
+        }
         newProduct.createInModel(modelContext.modeler.current!);
-        modelContext.finalProducts.set(newProduct.id, newProduct);
+        modelContext.products.set(newProduct.id, newProduct);
         setProduct(newProduct);
     }
 
     function handleProductChange(value: string) {
-        const newProduct = modelContext.finalProducts.get(value)
+        const newProduct = modelContext.products.get(value)
         if (newProduct) {
             setProduct(newProduct);
         }
@@ -43,7 +46,7 @@ export default function ProductPicker({product, setProduct, whichTypes}: Product
                      data={getProducts().map(p => p.toItemDataType())}
                      onCreate={handleNewProductCreation}
                      value={product?.id}
-                     onChange={handleProductChange}
+                     onSelect={handleProductChange}
         />
     )
 }

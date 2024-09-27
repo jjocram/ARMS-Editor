@@ -7,13 +7,16 @@ import {Transformation} from "./Models/Transformation.ts";
 
 export class ModelerContext {
     modeler!: React.MutableRefObject<Modeler | null>
-    finalProducts!: Map<string, Product>
+    products!: Map<string, Product>
     availableAccessories!: Map<string, Accessory>
-    transformationProducts!: Map<string, Product>
     transformations!: Map<string, Transformation>
 
-    get allProducts(): Map<string, Product> {
-        return new Map<string, Product>([...Array.from(this.finalProducts.entries()), ...Array.from(this.transformationProducts.entries())]);
+    get finalProducts(){
+        return [...this.products.values()].filter(product => product.finalQuantity !== undefined);
+    }
+
+    get transformationProducts() {
+        return [...this.products.values()].filter(product => product.finalQuantity === undefined);
     }
 }
 

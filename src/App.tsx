@@ -21,6 +21,7 @@ import Product from "./Models/Product.ts";
 import {ElementRegistry} from "bpmn-js/lib/features/auto-place/BpmnAutoPlaceUtil";
 import {Accessory} from "./Models/Accessory.ts";
 import {Transformation, TransformationIO} from "./Models/Transformation.ts";
+import {Moddle} from "bpmn-js/lib/model/Types";
 
 function App() {
     const modelerRef = useRef<Modeler | null>(null);
@@ -50,9 +51,8 @@ function App() {
             modelerRef.current.on('root.set', setupModelData)
 
             modelerContext.modeler = modelerRef;
-            modelerContext.finalProducts = new Map<string, Product>();
+            modelerContext.products = new Map<string, Product>();
             modelerContext.availableAccessories = new Map<string, Accessory>();
-            modelerContext.transformationProducts = new Map<string, Product>();
             modelerContext.transformations = new Map<string, Transformation>()
             console.log("Modeler initialized")
         }
@@ -69,13 +69,20 @@ function App() {
         const processElement = elementRegistry.find(element => element.type === "bpmn:Process");
         if (processElement) {
             console.log("Model changed... setting up model's data");
-            const extensionElements = processElement.businessObject.get("extensionElements").values;
+            let extensionElementsElement = processElement.businessObject.get("extensionElements")
+
+            if (!extensionElementsElement) {
+                extensionElementsElement =( modelerContext.modeler.current!.get("moddle") as Moddle).create("bpmn:ExtensionElements");
+                processElement.businessObject.extensionElements = extensionElementsElement;
+            }
+
+            const extensionElements = extensionElementsElement.get("values");
 
             const finalProducts = extensionElements
                 .filter((element: Shape) => is(element, "factory:Product"))
                 .map((element: Shape) => new Product(element.id, element.name))
                 .map((product: Product) => [product.id, product]);
-            modelerContext.finalProducts = new Map(finalProducts);
+            modelerContext.products = new Map(finalProducts);
 
             const availableAccessories = extensionElements
                 .filter((element: Shape) => is(element, "factory:Accessory"))
@@ -83,17 +90,9 @@ function App() {
                 .map((accessory: Accessory) => [accessory.id, accessory]);
             modelerContext.availableAccessories = new Map(availableAccessories);
 
-            const transformationProducts = extensionElements
-                .filter((element: Shape) => is(element, "factory:Transformation"))
-                .map((element: Shape) => [...element.inputs ?? [], ...element.outputs ?? []])
-                .flatMap((element: Shape) => element)
-                .flatMap((element: Shape) => new Product(element.id, element.productType))
-                .map((product: Product) => [product.id, product]);
-            modelerContext.transformationProducts = new Map(transformationProducts);
-
             const transformations = extensionElements
                 .filter((element: Shape) => is(element, "factory:Transformation"))
-                .map((element: Shape) => new Transformation(element.id, element.activityId, modelerContext.finalProducts.get(element.productId)!))
+                .map((element: Shape) => new Transformation(element.id, element.activityId, modelerContext.products.get(element.productId)!))
                 .map((transformation: Transformation) => [transformation.id, transformation]);
             modelerContext.transformations = new Map(transformations);
             modelerContext.transformations.forEach((transformation: Transformation) => {
@@ -118,7 +117,7 @@ function App() {
     }
 
     function setXmlDiagramToEmpty() {
-        fetch("/diagram.bpmn")
+        fetch("/empty_diagram.bpmn")
             .then(res => res.text())
             .then(data => modelerRef.current?.importXML(data))
             .catch(err => console.log(err));

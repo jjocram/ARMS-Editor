@@ -5,7 +5,6 @@ import Modeler from "bpmn-js/lib/Modeler";
 import {Moddle} from "bpmn-js/lib/model/Types";
 import {ElementRegistry} from "bpmn-js/lib/features/auto-place/BpmnAutoPlaceUtil";
 import {Shape} from "bpmn-js/lib/model/Types.ts";
-import {is} from "bpmn-js/lib/util/ModelUtil";
 import Modeling from "bpmn-js/lib/features/modeling/Modeling";
 
 export class TransformationIO {
@@ -51,7 +50,6 @@ export class Transformation {
         const extensionElements = processElement.businessObject.get("extensionElements");
 
         const oldTransformation = extensionElements.get("values")
-            .filter((element: Shape) => is(element, "factory:Transformation"))
             .find((element: Shape) => element.id === this.id);
 
         if (oldTransformation) {

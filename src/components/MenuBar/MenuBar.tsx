@@ -1,11 +1,14 @@
 import {ButtonToolbar, Dropdown} from "rsuite";
 import DropdownItem from "rsuite/DropdownItem";
-import {useRef} from "react";
+import {useRef, useState} from "react";
 import {useModelerRef} from "../../ModelerContext.ts";
+import ProductListModal from "../ProductListModal.tsx";
 
 // @ts-ignore
 function MenuBar({setXmlDiagramToEmpty}) {
     const modelerRef = useModelerRef();
+
+    const [showProductsModal, setShowProductsModal] = useState(false);
 
     function downloadDiagram() {
         modelerRef.modeler.current?.saveXML({format: true})
@@ -39,20 +42,28 @@ function MenuBar({setXmlDiagramToEmpty}) {
     }
 
     return (
-        <ButtonToolbar>
-            <Dropdown title="File">
-                <DropdownItem onSelect={() => setXmlDiagramToEmpty()}>New diagram</DropdownItem>
-                <DropdownItem onSelect={() => fileInputRef.current?.click()}>Upload diagram <input
-                    ref={fileInputRef}
-                    type="file" hidden
-                    onChange={handleFileInput}/></DropdownItem>
-                <DropdownItem onSelect={() => downloadDiagram()}>Download diagram</DropdownItem>
-            </Dropdown>
-            <Dropdown title="View">
-                <DropdownItem>Show/Hide Executors</DropdownItem>
-                <DropdownItem>Show/Hide Warnings</DropdownItem>
-            </Dropdown>
-        </ButtonToolbar>
+        <>
+            <ButtonToolbar>
+                <Dropdown title="File">
+                    <DropdownItem onSelect={() => setXmlDiagramToEmpty()}>New diagram</DropdownItem>
+                    <DropdownItem onSelect={() => fileInputRef.current?.click()}>Upload diagram <input
+                        ref={fileInputRef}
+                        type="file" hidden
+                        onChange={handleFileInput}/></DropdownItem>
+                    <DropdownItem onSelect={() => downloadDiagram()}>Download diagram</DropdownItem>
+                </Dropdown>
+                <Dropdown title="View">
+                    <DropdownItem>Show/Hide Executors</DropdownItem>
+                    <DropdownItem>Show/Hide Warnings</DropdownItem>
+                </Dropdown>
+                <Dropdown title="Simulation">
+                    <DropdownItem onSelect={() => setShowProductsModal(true)}>Products</DropdownItem>
+                    <DropdownItem>Accessories</DropdownItem>
+                </Dropdown>
+            </ButtonToolbar>
+
+            <ProductListModal show={showProductsModal} setShow={setShowProductsModal}/>
+        </>
     )
 }
 
