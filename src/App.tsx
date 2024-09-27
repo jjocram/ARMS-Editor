@@ -78,11 +78,15 @@ function App() {
 
             const extensionElements = extensionElementsElement.get("values");
 
-            const finalProducts = extensionElements
+            const products = extensionElements
                 .filter((element: Shape) => is(element, "factory:Product"))
-                .map((element: Shape) => new Product(element.id, element.name))
+                .map((element: Shape) => {
+                    const product = new Product(element.id, element.name)
+                    product.finalQuantity = element.quantity ?? undefined;
+                    return product
+                })
                 .map((product: Product) => [product.id, product]);
-            modelerContext.products = new Map(finalProducts);
+            modelerContext.products = new Map(products);
 
             const availableAccessories = extensionElements
                 .filter((element: Shape) => is(element, "factory:Accessory"))

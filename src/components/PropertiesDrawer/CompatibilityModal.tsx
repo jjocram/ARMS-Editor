@@ -24,7 +24,7 @@ export default function CompatibilityModal({showModal, setShowModal, executor, p
 
     useEffect(() => {
         if (productExecutor) {
-            setProduct(modelContext.finalProducts.get(productExecutor.id));
+            setProduct(modelContext.products.get(productExecutor.id));
             setTime(productExecutor?.time);
             setTimeUnit(productExecutor?.timeUnit);
         } else {

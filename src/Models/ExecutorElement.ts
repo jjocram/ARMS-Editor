@@ -19,7 +19,7 @@ export class ExecutorElement extends BaseElement {
         if (shape === null) {
             this.associatedProducts = [];
         }
-
+        console.log(finalProducts);
         this.associatedProducts = shape?.businessObject.product?.map((product: Shape) => new ProductExecutor(product.id, finalProducts.get(product.id)!.name, product.time, product.timeUnit, product.idActivity, this.id)) ?? [];
         if (associatedActivityId) {
             // refine with selected activity products

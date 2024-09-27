@@ -37,9 +37,10 @@ function PropertiesDrawer({shape, isOpen, setIsOpen}: PropertiesDrawerProps) {
     useEffect(() => {
         if (shape !== null) {
             if (ActivityElement.elementTypes.includes(shape.type)) {
-                setElement(new ActivityElement(shape, modelerRef.modeler.current!, modelerRef.finalProducts));
+                setElement(new ActivityElement(shape, modelerRef.modeler.current!, new Map(modelerRef.finalProducts.map(p => [p.id, p]))));
             } else if (shape.type === "factory:Executor") {
-                setElement(new ExecutorElement(shape, modelerRef.finalProducts, null));
+                console.log(modelerRef.finalProducts)
+                setElement(new ExecutorElement(shape, new Map(modelerRef.finalProducts.map(p => [p.id, p])), null));
             } else {
                 setElement(new BaseElement(shape));
             }
