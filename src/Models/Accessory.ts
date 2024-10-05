@@ -1,17 +1,14 @@
-import {TreeNode} from "rsuite/cjs/internals/Tree/types";
 import {ItemDataType} from "rsuite/CascadeTree";
-import Modeler from "bpmn-js/lib/Modeler";
-import {ElementRegistry} from "bpmn-js/lib/features/auto-place/BpmnAutoPlaceUtil";
 import {Moddle} from "bpmn-js/lib/model/Types";
 import {Shape} from "bpmn-js/lib/model/Types.ts";
+import ExtensionElement from "./ExtensionElement.ts";
 
-export class Accessory {
-    id: string;
+export class Accessory extends ExtensionElement {
     name: string;
     quantity: number;
 
     constructor(id: string, name: string, quantity: number) {
-        this.id = id;
+        super(id);
         this.name = name;
         this.quantity = quantity;
     }
@@ -23,39 +20,18 @@ export class Accessory {
         }
     }
 
-    createInModel(modeler: Modeler) {
-        const moddle = modeler.get("moddle") as Moddle;
-        const elementRegistry = modeler.get("elementRegistry") as ElementRegistry;
-        const processElement = elementRegistry.find(element => element.type === "bpmn:Process") as Shape;
-        const extensionElements = processElement.businessObject.get("extensionElements")
-
-        const newAccessory = moddle.create("factory:Accessory");
-        newAccessory.id = this.id;
-        newAccessory.name = this.name;
-        newAccessory.quantity = this.quantity;
-
-        extensionElements.get("values").push(newAccessory);
-    }
-}
-
-export class ExecutorAccessory {
-    id: string;
-    name: string;
-    quantity: number;
-    idExecutor: string;
-
-
-    constructor(id: string, name: string, quantity: number, idExecutor: string) {
-        this.id = id;
-        this.name = name;
-        this.quantity = quantity;
-        this.idExecutor = idExecutor;
+    newElement(moddle: Moddle): Shape {
+        return moddle.create("factory:Accessory", {
+            id: this.id,
+            name: this.name,
+            quantity: this.quantity,
+        });
     }
 
-    toTreeNode(): TreeNode {
-        return {
-            value: this.id,
-            label: JSON.stringify(this),
-        }
+    overwrite(oldElement: Shape, _moddle: Moddle): Shape {
+        oldElement.name = this.name;
+        oldElement.quantity = this.quantity;
+
+        return oldElement;
     }
 }

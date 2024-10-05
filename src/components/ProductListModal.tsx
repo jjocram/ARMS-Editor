@@ -29,7 +29,7 @@ export default function ProductListModal({show, setShow}: ProductListModalProps)
                     name: product.name,
                     finalQuantity: product.finalQuantity,
                 }
-            }))
+            }));
         }
     }, [show]);
 

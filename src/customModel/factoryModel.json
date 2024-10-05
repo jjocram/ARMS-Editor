@@ -13,20 +13,15 @@
       ],
       "properties": [
         {
-          "name": "product",
-          "type": "Product",
-          "isMany": true
-        },
-        {
-          "name": "accessories",
-          "type": "Accessory",
-          "isMany": true
+          "name": "quantity",
+          "isAttr": true,
+          "type": "String"
         }
       ]
     },
     {
       "name": "Accessory",
-      "superclass": [
+      "superClass": [
         "Element"
       ],
       "properties": [
@@ -151,6 +146,39 @@
           "type": "String"
         },
         {
+          "name": "quantity",
+          "isAttr": true,
+          "type": "String"
+        }
+      ]
+    },
+    {
+      "name": "AccessoryCompatibility",
+      "properties": [
+        {
+          "name": "id",
+          "isAttr": true,
+          "type": "String"
+        },
+        {
+          "name": "quantity",
+          "isAttr": true,
+          "type": "String"
+        }
+      ]
+    },
+    {
+      "name": "Compatibility",
+      "superClass": [
+        "Element"
+      ],
+      "properties": [
+        {
+          "name": "id",
+          "isAttr": true,
+          "type": "String"
+        },
+        {
           "name": "time",
           "isAttr": true,
           "type": "String"
@@ -171,9 +199,19 @@
           "type": "String"
         },
         {
-          "name": "quantity",
+          "name": "idExecutor",
           "isAttr": true,
           "type": "String"
+        },
+        {
+          "name": "idProduct",
+          "isAttr": true,
+          "type": "String"
+        },
+        {
+          "name": "accessories",
+          "type": "AccessoryCompatibility",
+          "isMany": true
         }
       ]
     },

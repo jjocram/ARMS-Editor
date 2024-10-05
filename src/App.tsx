@@ -22,6 +22,7 @@ import {ElementRegistry} from "bpmn-js/lib/features/auto-place/BpmnAutoPlaceUtil
 import {Accessory} from "./Models/Accessory.ts";
 import {Transformation, TransformationIO} from "./Models/Transformation.ts";
 import {Moddle} from "bpmn-js/lib/model/Types";
+import Compatibility, {AccessoryCompatibility} from "./Models/Compatibility.ts";
 
 function App() {
     const modelerRef = useRef<Modeler | null>(null);
@@ -48,12 +49,13 @@ function App() {
                 ]
             })
             modelerRef.current.on('element.dblclick', 1500, handleSelectionChange);
-            modelerRef.current.on('root.set', setupModelData)
+            modelerRef.current.on('import.done', setupModelData)
 
             modelerContext.modeler = modelerRef;
             modelerContext.products = new Map<string, Product>();
             modelerContext.availableAccessories = new Map<string, Accessory>();
             modelerContext.transformations = new Map<string, Transformation>()
+            modelerContext.compatibilities = [];
             console.log("Modeler initialized")
         }
     }
@@ -117,6 +119,21 @@ function App() {
                 transformation.inputs = inputs;
                 transformation.outputs = outputs;
             });
+
+            modelerContext.compatibilities = extensionElements
+                .filter((element: Shape) => is(element, "factory:Compatibility"))
+                .map((element: Shape) => {
+                    const product = modelerContext.products.get(element.idProduct)!;
+                    return new Compatibility(element.id, element.time, element.timeUnit, element.batch, element.idActivity, element.idExecutor, product, [])
+                });
+            modelerContext.compatibilities.forEach((compatibility: Compatibility) => {
+                compatibility.accessories = extensionElements
+                    .filter((element: Shape) => is(element, "factory:Compatibility"))
+                    .filter((element: Shape) => element.id === compatibility.id)
+                    .map((element: Shape) => element.accessories ?? [])
+                    .flatMap((element: Shape) => element)
+                    .flatMap((element: Shape) => new AccessoryCompatibility(element.id, element.quantity));
+            })
         }
     }
 
@@ -124,7 +141,7 @@ function App() {
         fetch("/empty_diagram.bpmn")
             .then(res => res.text())
             .then(data => modelerRef.current?.importXML(data))
-            .catch(err => console.log(err));
+            .catch(err => console.error(err));
     }
 
     useEffect(() => {

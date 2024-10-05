@@ -3,12 +3,15 @@ import DropdownItem from "rsuite/DropdownItem";
 import {useRef, useState} from "react";
 import {useModelerRef} from "../../ModelerContext.ts";
 import ProductListModal from "../ProductListModal.tsx";
+import AccessoryListModal from "../AccessoryListModal.tsx";
 
 // @ts-ignore
 function MenuBar({setXmlDiagramToEmpty}) {
     const modelerRef = useModelerRef();
 
     const [showProductsModal, setShowProductsModal] = useState(false);
+
+    const [showAccessoryModal, setShowAccessoryModal] = useState(false);
 
     function downloadDiagram() {
         modelerRef.modeler.current?.saveXML({format: true})
@@ -35,7 +38,7 @@ function MenuBar({setXmlDiagramToEmpty}) {
             modelerRef.modeler.current?.importXML(reader.result as string)
         }
         reader.onerror = () => {
-            console.log(reader.error)
+            console.error(reader.error)
         }
 
         reader.readAsText(file);
@@ -58,11 +61,12 @@ function MenuBar({setXmlDiagramToEmpty}) {
                 </Dropdown>
                 <Dropdown title="Simulation">
                     <DropdownItem onSelect={() => setShowProductsModal(true)}>Products</DropdownItem>
-                    <DropdownItem>Accessories</DropdownItem>
+                    <DropdownItem onSelect={() => setShowAccessoryModal(true)}>Accessories</DropdownItem>
                 </Dropdown>
             </ButtonToolbar>
 
             <ProductListModal show={showProductsModal} setShow={setShowProductsModal}/>
+            <AccessoryListModal show={showAccessoryModal} setShow={setShowAccessoryModal}/>
         </>
     )
 }

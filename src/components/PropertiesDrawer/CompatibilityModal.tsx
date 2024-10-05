@@ -1,73 +1,126 @@
-import {Button, Divider, Input, InputGroup, InputNumber, InputPicker, Modal, Stack} from "rsuite";
-import ProductExecutor, {AcceptedTimeUnit} from "../../Models/ProductExecutor.ts";
+import {Button, Divider, Heading, IconButton, Input, InputGroup, InputNumber, InputPicker, Modal, Stack} from "rsuite";
 import Product from "../../Models/Product.ts";
 import {useEffect, useState} from "react";
 import {ExecutorElement} from "../../Models/ExecutorElement.ts";
 import {ActivityElement} from "../../Models/ActivityElement.ts";
 import {useModelerRef} from "../../ModelerContext.ts";
 import ProductPicker from "../ProductPicker.tsx";
+import Compatibility, {AcceptedTimeUnit, AccessoryCompatibility} from "../../Models/Compatibility.ts";
+import {generateId} from "../../Utils.ts";
+import {Accessory} from "../../Models/Accessory.ts";
+import AccessoryPicker from "../AccessoryPicker.tsx";
+import AddOutlineIcon from "@rsuite/icons/AddOutline";
 
 
 interface CompatibilityModalProps {
     showModal: boolean;
     setShowModal: (showModal: boolean) => void;
     executor?: ExecutorElement;
-    productExecutor?: ProductExecutor,
+    compatibility?: Compatibility,
     activity: ActivityElement
 }
-export default function CompatibilityModal({showModal, setShowModal, executor, productExecutor, activity}: CompatibilityModalProps) {
-    const [product, setProduct] = useState<Product | undefined>(productExecutor !== undefined ? new Product(productExecutor?.id!, productExecutor?.name!) : undefined);
-    const [time, setTime] = useState<number | undefined | null>(productExecutor?.time);
-    const [timeUnit, setTimeUnit] = useState< AcceptedTimeUnit | undefined | null>(productExecutor?.timeUnit);
+
+interface AccessoryInput {
+    id: string;
+    accessory?: Accessory;
+    quantity?: number;
+}
+
+export default function CompatibilityModal({showModal, setShowModal, executor, compatibility, activity}: CompatibilityModalProps) {
+    const [product, setProduct] = useState<Product | undefined>(undefined);
+    const [time, setTime] = useState<number | undefined | null>(undefined);
+    const [timeUnit, setTimeUnit] = useState< AcceptedTimeUnit | undefined | null>(undefined);
+    const [batch, setBatch] = useState<number | undefined | null>(undefined);
+    const [accessories, setAccessories] = useState<Array<AccessoryInput>>([]);
 
     const modelContext = useModelerRef();
 
     useEffect(() => {
-        if (productExecutor) {
-            setProduct(modelContext.products.get(productExecutor.id));
-            setTime(productExecutor?.time);
-            setTimeUnit(productExecutor?.timeUnit);
+        if (compatibility) {
+            setProduct(compatibility?.product);
+            setTime(compatibility?.time);
+            setTimeUnit(compatibility?.timeUnit);
+            setBatch(compatibility?.batchQuantity);
+            setAccessories(compatibility?.accessories.map(accessory => {
+                const accessoryInput: AccessoryInput =  {
+                    id: accessory.id,
+                    accessory: modelContext.availableAccessories.get(accessory.id),
+                    quantity: accessory.quantity
+                }
+                return accessoryInput;
+            }));
         } else {
             setProduct(undefined);
             setTime(undefined);
             setTimeUnit(undefined);
         }
-    }, [productExecutor]);
+    }, [compatibility]);
 
     function closeModal(withSave: boolean): void {
         if (withSave) {
-            // Pre-condition: product, time, and timeUnit are ready to be saved thanks to canSave()
-            const oldProductExecutorIndex = executor?.associatedProducts.findIndex(pe => pe.id === productExecutor?.id)!;
-            const newProductExecutor = new ProductExecutor(product?.id!, product?.name!, time!, timeUnit!, activity.id, executor?.id!);
-            if (oldProductExecutorIndex >= 0) {
-                // Update
-                // @ts-ignore
-                executor.associatedProducts[oldProductExecutorIndex] = newProductExecutor;
+            // Pre-condition: product, time, timeUnit, batch, and accessories are ready to be saved thanks to canSave()
+            if (compatibility) {
+                compatibility.time = time!;
+                compatibility.timeUnit = timeUnit!;
+                compatibility.batchQuantity = batch!;
+                compatibility.product = product!;
+                compatibility.accessories = accessories.map(accessoryInput => new AccessoryCompatibility(accessoryInput.id, accessoryInput.quantity!));
+                compatibility.save(modelContext.modeler.current!);
             } else {
-                // Create
-                executor?.associatedProducts.push(newProductExecutor);
+                const newCompatibility = new Compatibility(
+                    generateId("Compatibility"),
+                    time!,
+                    timeUnit!,
+                    batch!,
+                    activity.id,
+                    executor!.id,
+                    product!,
+                    accessories.map(accessoryInput => new AccessoryCompatibility(accessoryInput.id, accessoryInput.quantity!))
+                );
+                newCompatibility.save(modelContext.modeler.current!);
+                executor?.associatedCompatibilities.push(newCompatibility);
+                modelContext.compatibilities.push(newCompatibility);
             }
-
-            executor?.save(modelContext.modeler.current!);
         }
 
         setShowModal(false);
     }
 
     function canSave(): boolean {
-        if (!product || !time || !timeUnit) {
+        if (!product || !time || !timeUnit || !batch || !executor) {
             return false;
         }
 
         return true
     }
 
+    function setSpecificAccessory(accessoryInput: AccessoryInput) {
+        return (accessory: Accessory) => {
+            setAccessories(prevState => prevState.map(prevIO => prevIO.id === accessoryInput.id ? {
+                ...prevIO,
+                id: accessory.id,
+                accessory: accessory
+            } : prevIO));
+        }
+    }
 
+    function addNewAccessory() {
+        const newInput: AccessoryInput = {
+            id: generateId("CompatibilityAccessory"),
+            accessory: undefined,
+            quantity: undefined
+        };
+        setAccessories(prevState => [...prevState, newInput]);
+    }
+
+    function setAccessoryQuantity(accessoryInput: AccessoryInput, newQuantity: number) {
+        setAccessories(prevState => prevState.map(prevIO => prevIO.id === accessoryInput.id ? {...prevIO, quantity: newQuantity} : prevIO));
+    }
 
     return (
         <Modal backdrop="static" keyboard={false} open={showModal} onClose={() => closeModal(false)}>
             <Modal.Header>
-                <Modal.Title>{productExecutor ? "Editing compatibility" : "New compatibility"} for {executor?.name}</Modal.Title>
+                <Modal.Title>{compatibility ? "Editing compatibility" : "New compatibility"} for {executor?.name}</Modal.Title>
             </Modal.Header>
 
             <Stack spacing={10} direction="column" alignItems="stretch" style={{padding: "1em"}}>
@@ -90,8 +143,25 @@ export default function CompatibilityModal({showModal, setShowModal, executor, p
                 <InputGroup>
                     <InputGroup.Addon>Time</InputGroup.Addon>
                     <InputNumber value={time} min={0} onChange={value => setTime(value as number)}/>
-                    <InputPicker data={ProductExecutor.acceptedTimeUnitsToItemDataType} value={timeUnit} onChange={value => setTimeUnit(value as AcceptedTimeUnit)}/>
+                    <InputPicker data={Compatibility.acceptedTimeUnitsToItemDataType} value={timeUnit} onChange={value => setTimeUnit(value as AcceptedTimeUnit)}/>
                 </InputGroup>
+
+                <InputGroup>
+                    <InputGroup.Addon>Batch size</InputGroup.Addon>
+                    <InputNumber value={batch} min={1} onChange={value => setBatch(value as number)}/>
+                </InputGroup>
+
+                <Divider />
+
+                <Heading>Accessories</Heading>
+
+                {accessories.map(accessoryInput => (
+                    <InputGroup key={accessoryInput.id}>
+                        <AccessoryPicker accessory={accessoryInput.accessory!} setAccessory={setSpecificAccessory(accessoryInput)}/>
+                        <InputNumber placeholder="Quantity" value={accessoryInput.quantity} min={1} onChange={value => setAccessoryQuantity(accessoryInput, value as number)} />
+                    </InputGroup>
+                ))}
+                <IconButton icon={<AddOutlineIcon/>} onClick={addNewAccessory}/>
             </Stack>
 
             <Modal.Footer>

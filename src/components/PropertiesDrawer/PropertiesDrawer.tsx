@@ -5,14 +5,12 @@ import {BaseElement} from "../../Models/BaseElement.ts";
 import {Shape} from "bpmn-js/lib/model/Types.ts";
 import {ActivityElement} from "../../Models/ActivityElement.ts";
 import {ExecutorElement} from "../../Models/ExecutorElement.ts";
-import ProductExecutor from "../../Models/ProductExecutor.ts";
 import CompatibilityModal from "./CompatibilityModal.tsx";
 import {ButtonTreeNode} from "../ButtonTreeNode.ts";
-import {ExecutorAccessory} from "../../Models/Accessory.ts";
-import AccessoryModal from "./AccessoryModal.tsx";
 import {TreeNode} from "rsuite/cjs/internals/Tree/types";
 import {Transformation, TransformationIO} from "../../Models/Transformation.ts";
 import TransformationModal from "./TransformationModal.tsx";
+import Compatibility from "../../Models/Compatibility.ts";
 
 interface PropertiesDrawerProps {
     shape: Shape | null,
@@ -26,10 +24,7 @@ function PropertiesDrawer({shape, isOpen, setIsOpen}: PropertiesDrawerProps) {
 
     const [showCompatibilityModal, setShowCompatibilityModal] = useState<boolean>(false);
     const [selectedExecutor, setSelectedExecutor] = useState<ExecutorElement | null>(null);
-    const [selectedCompatibility, setSelectedCompatibility] = useState<ProductExecutor | undefined>(undefined);
-
-    const [showAccessoryModal, setShowAccessoryModal] = useState<boolean>(false);
-    const [selectedAccessory, setSelectedAccessory] = useState<ExecutorAccessory | undefined>(undefined);
+    const [selectedCompatibility, setSelectedCompatibility] = useState<Compatibility | undefined>(undefined);
 
     const [showTransformationModal, setShowTransformationModal] = useState<boolean>(false);
     const [selectedTransformation, setSelectedTransformation] = useState<Transformation | undefined>(undefined);
@@ -37,10 +32,9 @@ function PropertiesDrawer({shape, isOpen, setIsOpen}: PropertiesDrawerProps) {
     useEffect(() => {
         if (shape !== null) {
             if (ActivityElement.elementTypes.includes(shape.type)) {
-                setElement(new ActivityElement(shape, modelerRef.modeler.current!, new Map(modelerRef.finalProducts.map(p => [p.id, p]))));
+                setElement(new ActivityElement(shape, modelerRef.modeler.current!, modelerRef.compatibilities!));
             } else if (shape.type === "factory:Executor") {
-                console.log(modelerRef.finalProducts)
-                setElement(new ExecutorElement(shape, new Map(modelerRef.finalProducts.map(p => [p.id, p])), null));
+                setElement(new ExecutorElement(shape, []));
             } else {
                 setElement(new BaseElement(shape));
             }
@@ -63,7 +57,7 @@ function PropertiesDrawer({shape, isOpen, setIsOpen}: PropertiesDrawerProps) {
     }
 
 
-    function renderLabelForProductExecutor(productExecutorString: string) {
+    function renderLabelForCompatibility(productExecutorString: string) {
         if (productExecutorString.startsWith("button")) {
             const executorId = productExecutorString.split("@")[1]
             const executor = (element as ActivityElement).connectedExecutors.find((e) => e.id === executorId)!;
@@ -76,25 +70,18 @@ function PropertiesDrawer({shape, isOpen, setIsOpen}: PropertiesDrawerProps) {
 
             );
         } else {
-            const productExecutorJSON = JSON.parse(productExecutorString);
-            const productExecutor = new ProductExecutor(
-                productExecutorJSON["id"],
-                productExecutorJSON["name"],
-                productExecutorJSON["time"],
-                productExecutorJSON["timeUnit"],
-                productExecutorJSON["idActivity"],
-                productExecutorJSON["idExecutor"]
-            );
-            const executor = (element as ActivityElement).connectedExecutors.find(executor => executor.id === productExecutor.idExecutor)!;
+            const compatibilityJSON = JSON.parse(productExecutorString);
+            const compatibility = modelerRef.compatibilities.find(c => c.id === compatibilityJSON.id)!;
+            const executor = (element as ActivityElement).connectedExecutors.find(executor => executor.id === compatibility.idExecutor)!;
             return (
                 <Grid fluid>
                     <Row className="show-grid, disable-double-click" onDoubleClick={() => {
                         setSelectedExecutor(executor)
-                        setSelectedCompatibility(productExecutor);
+                        setSelectedCompatibility(compatibility);
                         setShowCompatibilityModal(true)
                     }}>
-                        <Col>{productExecutor.name}</Col>
-                        <Col>{productExecutor.time}{productExecutor.timeUnit}</Col>
+                        <Col>{compatibility.product.name}</Col>
+                        <Col>{compatibility.time}{compatibility.timeUnit}</Col>
                     </Row>
                 </Grid>
             );
@@ -113,12 +100,12 @@ function PropertiesDrawer({shape, isOpen, setIsOpen}: PropertiesDrawerProps) {
                               renderTreeNode={treeNode => {
                                   return (
                                       <>
-                                          {treeNode.children ? treeNode.label : renderLabelForProductExecutor(treeNode.label as string)}
+                                          {treeNode.children ? treeNode.label : renderLabelForCompatibility(treeNode.label as string)}
                                       </>
                                   );
                               }}/>
                         <CompatibilityModal showModal={showCompatibilityModal} setShowModal={setShowCompatibilityModal}
-                                            executor={selectedExecutor!} activity={activityElement} productExecutor={selectedCompatibility}/>
+                                            executor={selectedExecutor!} activity={activityElement} compatibility={selectedCompatibility}/>
                     </Accordion.Panel>
                 </>
             );
@@ -198,54 +185,6 @@ function PropertiesDrawer({shape, isOpen, setIsOpen}: PropertiesDrawerProps) {
         }
     }
 
-    function renderLabelForExecutorAccessory(valueString: string) {
-        if (valueString.startsWith("button")) {
-            return (
-                <Button onClick={() => {
-                    setSelectedAccessory(undefined)
-                    setShowAccessoryModal(true);
-                }}>New accessory</Button>
-            );
-        } else {
-            const executorAccesoryJSON = JSON.parse(valueString);
-            const executorAccessory = new ExecutorAccessory(
-                executorAccesoryJSON["id"],
-                executorAccesoryJSON["name"],
-                executorAccesoryJSON["quantity"],
-                executorAccesoryJSON["idExecutor"],
-            );
-            return (
-                <Grid fluid>
-                    <Row className="show-grid, disable-double-click" onDoubleClick={() => {
-                        setSelectedAccessory(executorAccessory);
-                        setShowAccessoryModal(true);
-                    }}>
-                        <Col>{executorAccessory.name}</Col>
-                        <Col>{executorAccessory.quantity}</Col>
-                    </Row>
-                </Grid>
-            )
-        }
-    }
-
-    function renderAccessories() {
-        if (element.needAccessories()) {
-            const executorElement = element as ExecutorElement;
-            const accessories = executorElement.neededAccessories.map(accessory => accessory.toTreeNode())
-            accessories.push(ButtonTreeNode(executorElement.id))
-            return (
-                <>
-                    <Accordion.Panel header="Accessories">
-                        <Tree data={accessories}
-                        renderTreeNode={treeNode => {return (renderLabelForExecutorAccessory(treeNode.label as string))}}/>
-
-                        <AccessoryModal showModal={showAccessoryModal} setShowModal={setShowAccessoryModal} executor={executorElement} executorAccessory={selectedAccessory}/>
-                    </Accordion.Panel>
-                </>
-            );
-        }
-    }
-
     function renderBaseInfo() {
         return (
             <>
@@ -280,7 +219,6 @@ function PropertiesDrawer({shape, isOpen, setIsOpen}: PropertiesDrawerProps) {
                     {renderBaseInfo()}
                     {renderCompatibilities()}
                     {renderTransformations()}
-                    {renderAccessories()}
                 </Accordion>
             </Drawer.Body>
         </Drawer>

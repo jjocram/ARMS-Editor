@@ -40,7 +40,7 @@ export default function TransformationModal({
             setInputs(transformation.inputs.map(io => {
                 const input: InputOutput = {
                     id: io.id,
-                    product: modelerContext.allProducts.get(io.id),
+                    product: modelerContext.products.get(io.id),
                     quantity: io.quantity
                 }
                 return input;
@@ -48,7 +48,7 @@ export default function TransformationModal({
             setOutputs(transformation.outputs.map(io => {
                 const output: InputOutput = {
                     id: io.id,
-                    product: modelerContext.allProducts.get(io.id),
+                    product: modelerContext.products.get(io.id),
                     quantity: io.quantity
                 }
                 return output;

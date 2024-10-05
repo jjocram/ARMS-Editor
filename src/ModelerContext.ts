@@ -3,6 +3,7 @@ import Modeler from "bpmn-js/lib/Modeler";
 import Product from "./Models/Product.ts";
 import {Accessory} from "./Models/Accessory.ts";
 import {Transformation} from "./Models/Transformation.ts";
+import Compatibility from "./Models/Compatibility.ts";
 
 
 export class ModelerContext {
@@ -10,6 +11,7 @@ export class ModelerContext {
     products!: Map<string, Product>
     availableAccessories!: Map<string, Accessory>
     transformations!: Map<string, Transformation>
+    compatibilities!: Array<Compatibility>
 
     get finalProducts(){
         return [...this.products.values()].filter(product => product.finalQuantity !== undefined);
