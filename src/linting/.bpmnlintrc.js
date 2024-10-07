@@ -1612,30 +1612,6 @@ var superfluousGateway = function () {
 
 };
 
-var noProductsDefined = function () {
-
-  function check(node, reporter) {
-    if (!is(node, 'factory:Executor')) {
-      return;
-    }
-
-    // Ensure node.product is an array
-    const products = Array.isArray(node.product) ? node.product : [];
-
-    // Check if there is at least one 'factory:Product' in node.product
-    if (!products.some(product => is(product, 'factory:Product'))) {
-      reporter.report(node.id, 'Element is missing product');
-    }
-  }
-
-  return {
-    check
-  };
-
-};
-
-
-
 var noExecutorDefined = function () {
 
   function check(node, reporter) {
@@ -1693,24 +1669,23 @@ Resolver.prototype.resolveConfig = function (pkg, configName) {
 const resolver = new Resolver();
 
 const rules = {
-  //"conditional-flows": "error",
+  "conditional-flows": "error",
   "end-event-required": "error",
   "event-sub-process-typed-start-event": "error",
-  //"fake-join": "warn",
+  // "fake-join": "warn",
   "label-required": "warn",
   //"no-bpmndi": "error",
   "no-complex-gateway": "error",
   "no-disconnected": "error",
   //"no-duplicate-sequence-flows": "error",
   "no-gateway-join-fork": "error",
-  //"no-implicit-split": "error",
+  // "no-implicit-split": "error",
   "no-inclusive-gateway": "error",
   "single-blank-start-event": "error",
   "single-event-definition": "error",
   "start-event-required": "error",
   "sub-process-blank-start-event": "error",
   "superfluous-gateway": "warn",
-  "no-products-defined": "error",
   "no-executor-defined": "error"
 };
 
@@ -1722,24 +1697,23 @@ const bundle = {
   resolver: resolver,
   config: config
 };
-//cache['bpmnlint/conditional-flows'] = conditionalFlows;
+cache['bpmnlint/conditional-flows'] = conditionalFlows;
 cache['bpmnlint/end-event-required'] = endEventRequired;
 cache['bpmnlint/event-sub-process-typed-start-event'] = eventSubProcessTypedStartEvent;
-cache['bpmnlint/fake-join'] = fakeJoin;
+// cache['bpmnlint/fake-join'] = fakeJoin;
 cache['bpmnlint/label-required'] = labelRequired;
 //cache['bpmnlint/no-bpmndi'] = noBpmndi;
 cache['bpmnlint/no-complex-gateway'] = noComplexGateway;
 cache['bpmnlint/no-disconnected'] = noDisconnected;
-//cache['bpmnlint/no-duplicate-sequence-flows'] = noDuplicateSequenceFlows;
+cache['bpmnlint/no-duplicate-sequence-flows'] = noDuplicateSequenceFlows;
 cache['bpmnlint/no-gateway-join-fork'] = noGatewayJoinFork;
-//cache['bpmnlint/no-implicit-split'] = noImplicitSplit;
+// cache['bpmnlint/no-implicit-split'] = noImplicitSplit;
 cache['bpmnlint/no-inclusive-gateway'] = noInclusiveGateway;
 cache['bpmnlint/single-blank-start-event'] = singleBlankStartEvent;
 cache['bpmnlint/single-event-definition'] = singleEventDefinition;
 cache['bpmnlint/start-event-required'] = startEventRequired;
 cache['bpmnlint/sub-process-blank-start-event'] = subProcessBlankStartEvent;
 cache['bpmnlint/superfluous-gateway'] = superfluousGateway;
-cache['bpmnlint/no-products-defined'] = noProductsDefined;
 cache['bpmnlint/no-executor-defined'] = noExecutorDefined;
 
 
