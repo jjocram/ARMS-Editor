@@ -11,7 +11,6 @@ export class AccessoryCompatibility {
     id: string;
     quantity: number;
 
-
     constructor(id: string, quantity: number) {
         this.id = id;
         this.quantity = quantity;
@@ -91,6 +90,10 @@ export default class Compatibility extends ExtensionElement {
         });
 
         return oldElement;
+    }
+
+    deleteFromExtensionElements(oldValues: Array<Shape>): Array<Shape> {
+        return oldValues.filter(element => element.id !== this.id);
     }
 
 }

@@ -1,4 +1,4 @@
-import {Accordion, Button, Col, Drawer, Grid, Input, InputGroup, Row, Stack, Tree} from "rsuite";
+import {Accordion, Button, Col, Drawer, Grid, HStack, IconButton, Input, InputGroup, Row, Stack, Tree} from "rsuite";
 import {useEffect, useState} from "react";
 import {useModelerRef} from "../../ModelerContext.ts";
 import {BaseElement} from "../../Models/BaseElement.ts";
@@ -11,6 +11,7 @@ import {TreeNode} from "rsuite/cjs/internals/Tree/types";
 import {Transformation, TransformationIO} from "../../Models/Transformation.ts";
 import TransformationModal from "./TransformationModal.tsx";
 import Compatibility from "../../Models/Compatibility.ts";
+import MinusRoundIcon from "@rsuite/icons/MinusRound";
 
 interface PropertiesDrawerProps {
     shape: Shape | null,
@@ -57,6 +58,21 @@ function PropertiesDrawer({shape, isOpen, setIsOpen}: PropertiesDrawerProps) {
     }
 
 
+    function handleRemoveCompatibility(compatibility: Compatibility) {
+        const activityElement = element as ActivityElement;
+        activityElement.connectedExecutors = activityElement.connectedExecutors.map(e => {
+            if (e.id === compatibility.idExecutor) {
+                e.associatedCompatibilities = e.associatedCompatibilities.filter(c => c.id !== compatibility.id);
+            }
+            return e
+        });
+        setElement(activityElement);
+
+        compatibility.delete(modelerRef.modeler.current!);
+
+        modelerRef.compatibilities = modelerRef.compatibilities.filter(c => c.id !== compatibility.id);
+    }
+
     function renderLabelForCompatibility(productExecutorString: string) {
         if (productExecutorString.startsWith("button")) {
             const executorId = productExecutorString.split("@")[1]
@@ -71,20 +87,26 @@ function PropertiesDrawer({shape, isOpen, setIsOpen}: PropertiesDrawerProps) {
             );
         } else {
             const compatibilityJSON = JSON.parse(productExecutorString);
-            const compatibility = modelerRef.compatibilities.find(c => c.id === compatibilityJSON.id)!;
-            const executor = (element as ActivityElement).connectedExecutors.find(executor => executor.id === compatibility.idExecutor)!;
-            return (
-                <Grid fluid>
-                    <Row className="show-grid, disable-double-click" onDoubleClick={() => {
-                        setSelectedExecutor(executor)
-                        setSelectedCompatibility(compatibility);
-                        setShowCompatibilityModal(true)
-                    }}>
-                        <Col>{compatibility.product.name}</Col>
-                        <Col>{compatibility.time}{compatibility.timeUnit}</Col>
-                    </Row>
-                </Grid>
-            );
+            const compatibility = modelerRef.compatibilities.find(c => c.id === compatibilityJSON.id);
+            if (compatibility) {
+                const executor = (element as ActivityElement).connectedExecutors.find(executor => executor.id === compatibility.idExecutor)!;
+                return (
+                    <HStack>
+                        <Grid fluid>
+                            <Row className="show-grid, disable-double-click" onDoubleClick={() => {
+                                setSelectedExecutor(executor)
+                                setSelectedCompatibility(compatibility);
+                                setShowCompatibilityModal(true)
+                            }}>
+                                <Col>{compatibility.product.name}</Col>
+                                <Col>{compatibility.time}{compatibility.timeUnit}</Col>
+                            </Row>
+                        </Grid>
+                        <IconButton icon={<MinusRoundIcon/>} color="red" appearance="subtle"
+                                    onClick={() => handleRemoveCompatibility(compatibility)}/>
+                    </HStack>
+                );
+            }
         }
     }
 
@@ -105,7 +127,8 @@ function PropertiesDrawer({shape, isOpen, setIsOpen}: PropertiesDrawerProps) {
                                   );
                               }}/>
                         <CompatibilityModal showModal={showCompatibilityModal} setShowModal={setShowCompatibilityModal}
-                                            executor={selectedExecutor!} activity={activityElement} compatibility={selectedCompatibility}/>
+                                            executor={selectedExecutor!} activity={activityElement}
+                                            compatibility={selectedCompatibility}/>
                     </Accordion.Panel>
                 </>
             );
@@ -125,17 +148,26 @@ function PropertiesDrawer({shape, isOpen, setIsOpen}: PropertiesDrawerProps) {
             const buttonType = dataLabel.split("@")[1];
             if (buttonType.startsWith("Activity")) {
                 // Render button for completely new Transformation
-                return (<Button onClick={() => {setShowTransformationModal(true); setSelectedTransformation(undefined)}}>Add transformation for a product</Button>)
+                return (<Button onClick={() => {
+                    setShowTransformationModal(true);
+                    setSelectedTransformation(undefined)
+                }}>Add transformation for a product</Button>)
             } else if (buttonType.startsWith("Inputs")) {
                 // Render button for adding a new product to inputs
                 const transformationId = dataLabel.split("@")[2];
                 const transformation = modelerRef.transformations.get(transformationId);
-                return (<Button onClick={() => {setSelectedTransformation(transformation); setShowTransformationModal(true)}}>Add a new product to inputs</Button>)
+                return (<Button onClick={() => {
+                    setSelectedTransformation(transformation);
+                    setShowTransformationModal(true)
+                }}>Add a new product to inputs</Button>)
             } else if (buttonType.startsWith("Outputs")) {
                 // Render button for adding a new product to outputs
                 const transformationId = dataLabel.split("@")[2];
                 const transformation = modelerRef.transformations.get(transformationId);
-                return (<Button onClick={() => {setSelectedTransformation(transformation); setShowTransformationModal(true)}}>Add a new product to outputs</Button>)
+                return (<Button onClick={() => {
+                    setSelectedTransformation(transformation);
+                    setShowTransformationModal(true)
+                }}>Add a new product to outputs</Button>)
             } else {
                 throw new Error(`Type of button ${dataLabel} in transformation not recognized`)
             }
@@ -176,7 +208,9 @@ function PropertiesDrawer({shape, isOpen, setIsOpen}: PropertiesDrawerProps) {
                         <Tree data={transformations} renderTreeNode={treeNode => {
                             return (renderLabelForTransformation(treeNode))
                         }}/>
-                        <TransformationModal showModal={showTransformationModal} setShowModal={setShowTransformationModal} activity={activityElement} transformation={selectedTransformation}/>
+                        <TransformationModal showModal={showTransformationModal}
+                                             setShowModal={setShowTransformationModal} activity={activityElement}
+                                             transformation={selectedTransformation}/>
                     </Accordion.Panel>
                 </>
             );
