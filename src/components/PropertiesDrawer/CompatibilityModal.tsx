@@ -1,4 +1,16 @@
-import {Button, Divider, Heading, IconButton, Input, InputGroup, InputNumber, InputPicker, Modal, Stack} from "rsuite";
+import {
+    Button,
+    Divider,
+    Heading,
+    HStack,
+    IconButton,
+    Input,
+    InputGroup,
+    InputNumber,
+    InputPicker,
+    Modal,
+    Stack
+} from "rsuite";
 import Product from "../../Models/Product.ts";
 import {useEffect, useState} from "react";
 import {ExecutorElement} from "../../Models/ExecutorElement.ts";
@@ -10,6 +22,7 @@ import {generateId} from "../../Utils.ts";
 import {Accessory} from "../../Models/Accessory.ts";
 import AccessoryPicker from "../AccessoryPicker.tsx";
 import AddOutlineIcon from "@rsuite/icons/AddOutline";
+import MinusRoundIcon from '@rsuite/icons/MinusRound';
 
 
 interface CompatibilityModalProps {
@@ -26,10 +39,16 @@ interface AccessoryInput {
     quantity?: number;
 }
 
-export default function CompatibilityModal({showModal, setShowModal, executor, compatibility, activity}: CompatibilityModalProps) {
+export default function CompatibilityModal({
+                                               showModal,
+                                               setShowModal,
+                                               executor,
+                                               compatibility,
+                                               activity
+                                           }: CompatibilityModalProps) {
     const [product, setProduct] = useState<Product | undefined>(undefined);
     const [time, setTime] = useState<number | undefined | null>(undefined);
-    const [timeUnit, setTimeUnit] = useState< AcceptedTimeUnit | undefined | null>(undefined);
+    const [timeUnit, setTimeUnit] = useState<AcceptedTimeUnit | undefined | null>(undefined);
     const [batch, setBatch] = useState<number | undefined | null>(undefined);
     const [accessories, setAccessories] = useState<Array<AccessoryInput>>([]);
 
@@ -42,7 +61,7 @@ export default function CompatibilityModal({showModal, setShowModal, executor, c
             setTimeUnit(compatibility?.timeUnit);
             setBatch(compatibility?.batchQuantity);
             setAccessories(compatibility?.accessories.map(accessory => {
-                const accessoryInput: AccessoryInput =  {
+                const accessoryInput: AccessoryInput = {
                     id: accessory.id,
                     accessory: modelContext.availableAccessories.get(accessory.id),
                     quantity: accessory.quantity
@@ -114,7 +133,14 @@ export default function CompatibilityModal({showModal, setShowModal, executor, c
     }
 
     function setAccessoryQuantity(accessoryInput: AccessoryInput, newQuantity: number) {
-        setAccessories(prevState => prevState.map(prevIO => prevIO.id === accessoryInput.id ? {...prevIO, quantity: newQuantity} : prevIO));
+        setAccessories(prevState => prevState.map(prevIO => prevIO.id === accessoryInput.id ? {
+            ...prevIO,
+            quantity: newQuantity
+        } : prevIO));
+    }
+
+    function handleRemoveAccessory(accessoryInput: AccessoryInput) {
+        setAccessories(prevState => prevState.filter(a => a.id !== accessoryInput.id))
     }
 
     return (
@@ -133,7 +159,7 @@ export default function CompatibilityModal({showModal, setShowModal, executor, c
                     <Input value={executor?.name} readOnly/>
                 </InputGroup>
 
-                <Divider />
+                <Divider/>
 
                 <InputGroup>
                     <InputGroup.Addon>Product</InputGroup.Addon>
@@ -143,7 +169,8 @@ export default function CompatibilityModal({showModal, setShowModal, executor, c
                 <InputGroup>
                     <InputGroup.Addon>Time</InputGroup.Addon>
                     <InputNumber value={time} min={0} onChange={value => setTime(value as number)}/>
-                    <InputPicker data={Compatibility.acceptedTimeUnitsToItemDataType} value={timeUnit} onChange={value => setTimeUnit(value as AcceptedTimeUnit)}/>
+                    <InputPicker data={Compatibility.acceptedTimeUnitsToItemDataType} value={timeUnit}
+                                 onChange={value => setTimeUnit(value as AcceptedTimeUnit)}/>
                 </InputGroup>
 
                 <InputGroup>
@@ -151,21 +178,26 @@ export default function CompatibilityModal({showModal, setShowModal, executor, c
                     <InputNumber value={batch} min={1} onChange={value => setBatch(value as number)}/>
                 </InputGroup>
 
-                <Divider />
+                <Divider/>
 
                 <Heading>Accessories</Heading>
 
                 {accessories.map(accessoryInput => (
-                    <InputGroup key={accessoryInput.id}>
-                        <AccessoryPicker accessory={accessoryInput.accessory!} setAccessory={setSpecificAccessory(accessoryInput)}/>
-                        <InputNumber placeholder="Quantity" value={accessoryInput.quantity} min={1} onChange={value => setAccessoryQuantity(accessoryInput, value as number)} />
-                    </InputGroup>
+                    <HStack key={accessoryInput.id}>
+                        <InputGroup>
+                            <AccessoryPicker accessory={accessoryInput.accessory!}
+                                             setAccessory={setSpecificAccessory(accessoryInput)}/>
+                            <InputNumber placeholder="Quantity" value={accessoryInput.quantity} min={1}
+                                         onChange={value => setAccessoryQuantity(accessoryInput, value as number)}/>
+                        </InputGroup>
+                        <IconButton icon={<MinusRoundIcon/>} color="red" appearance="primary" onClick={() => handleRemoveAccessory(accessoryInput)}/>
+                    </HStack>
                 ))}
                 <IconButton icon={<AddOutlineIcon/>} onClick={addNewAccessory}/>
             </Stack>
 
             <Modal.Footer>
-                <Button onClick={() => closeModal(true) } disabled={!canSave()} appearance="primary">Save</Button>
+                <Button onClick={() => closeModal(true)} disabled={!canSave()} appearance="primary">Save</Button>
                 <Button onClick={() => closeModal(false)} appearance="subtle">Cancel</Button>
             </Modal.Footer>
         </Modal>
