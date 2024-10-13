@@ -110,6 +110,10 @@ export default function CompatibilityModal({
             return false;
         }
 
+        if (!accessories.map(a => a.accessory !== undefined && a.quantity !== undefined).reduce((a, b) => a && b, true)) {
+            return false;
+        }
+
         return true
     }
 
