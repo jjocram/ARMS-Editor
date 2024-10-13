@@ -32,7 +32,20 @@ export default abstract class ExtensionElement {
         }
     }
 
-    abstract  overwrite(oldElement: Shape, moddle: Moddle): Shape;
+    abstract overwrite(oldElement: Shape, moddle: Moddle): Shape;
 
     abstract newElement(moddle: Moddle): Shape;
+
+    abstract deleteFromExtensionElements(oldValues: Array<Shape>): Array<Shape>;
+
+    delete(modeler: Modeler) {
+        const modeling = modeler.get('modeling') as Modeling;
+        const elementRegistry = modeler.get("elementRegistry") as ElementRegistry;
+        const processElement = elementRegistry.find(element => element.type === "bpmn:Process") as Shape;
+        const extensionElements = processElement.businessObject.get("extensionElements");
+
+        extensionElements.values = this.deleteFromExtensionElements(extensionElements.get("values"));
+
+        modeling.updateProperties(processElement, {extensionElements});
+    }
 }

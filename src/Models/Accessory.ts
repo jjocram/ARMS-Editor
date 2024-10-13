@@ -2,6 +2,7 @@ import {ItemDataType} from "rsuite/CascadeTree";
 import {Moddle} from "bpmn-js/lib/model/Types";
 import {Shape} from "bpmn-js/lib/model/Types.ts";
 import ExtensionElement from "./ExtensionElement.ts";
+import {is} from "bpmn-js/lib/util/ModelUtil";
 
 export class Accessory extends ExtensionElement {
     name: string;
@@ -33,5 +34,20 @@ export class Accessory extends ExtensionElement {
         oldElement.quantity = this.quantity;
 
         return oldElement;
+    }
+
+    deleteFromExtensionElements(oldValues: Array<Shape>): Array<Shape> {
+        // Remove factory:accessory in the first level of the array
+        var newValues = oldValues.filter(element => element.id !== this.id);
+
+        // Remove factory:compatibilityAccessory with this.id in each compatibility and update each compatibility
+        newValues = newValues
+            .filter(element => is(element, "factory:Compatibility"))
+            .map(compatibility => {
+                compatibility.accessories = compatibility.accessories.filter((accessory: Shape) => accessory.id !== this.id)
+                return compatibility
+            });
+
+        return newValues;
     }
 }
