@@ -1,6 +1,5 @@
 import {ItemDataType} from "rsuite/CascadeTree";
 import {TreeNode} from "rsuite/cjs/internals/Tree/types";
-import Product from "./Product.ts";
 import ExtensionElement from "./ExtensionElement.ts";
 import {Moddle} from "bpmn-js/lib/model/Types";
 import {Shape} from "bpmn-js/lib/model/Types.ts";
@@ -23,18 +22,18 @@ export default class Compatibility extends ExtensionElement {
     batchQuantity: number;
     idActivity: string;
     idExecutor: string;
-    product: Product;
+    productProperties: Map<string, string>;
     accessories: Array<AccessoryCompatibility>;
 
 
-    constructor(id: string, time: number, timeUnit: AcceptedTimeUnit, batchQuantity: number, idActivity: string, idExecutor: string, product: Product, accessories: Array<AccessoryCompatibility>) {
+    constructor(id: string, time: number, timeUnit: AcceptedTimeUnit, batchQuantity: number, idActivity: string, idExecutor: string, productProperties: Map<string, string>, accessories: Array<AccessoryCompatibility>) {
         super(id);
         this.time = time;
         this.timeUnit = timeUnit;
         this.batchQuantity = batchQuantity;
         this.idActivity = idActivity;
         this.idExecutor = idExecutor;
-        this.product = product;
+        this.productProperties = productProperties;
         this.accessories = accessories;
     }
 
@@ -60,7 +59,12 @@ export default class Compatibility extends ExtensionElement {
             batch: this.batchQuantity,
             idActivity: this.idActivity,
             idExecutor: this.idExecutor,
-            idProduct: this.product.id,
+            productProperties: Array.from(this.productProperties, ([key, value]) => {
+                return moddle.create("factory:ProductProperty", {
+                    key: key,
+                    value: value
+                })
+            }),
             accessories: this.accessories.map(accessory => {
                 return moddle.create("factory:AccessoryCompatibility", {
                     id: accessory.id,
@@ -74,7 +78,18 @@ export default class Compatibility extends ExtensionElement {
         oldElement.time = this.time;
         oldElement.timeUnit = this.timeUnit;
         oldElement.batch = this.batchQuantity;
-        oldElement.idProduct = this.product.id;
+        oldElement.productProperties = [...this.productProperties.entries()].map(([key, value]) => {
+            const propertyToChange = oldElement.productProperties?.find((p: Shape) => p.key === key);
+            if (propertyToChange) {
+                propertyToChange.value = value;
+                return propertyToChange;
+            } else {
+                return moddle.create("factory:ProductProperty", {
+                    key: key,
+                    value: value
+                })
+            }
+        });
         oldElement.accessories = this.accessories.map(accessory => {
             const accessoryToChange = oldElement.accessories?.find((a: Shape) => a.id === accessory.id);
             if (accessoryToChange) {

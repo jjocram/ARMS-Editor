@@ -98,7 +98,7 @@ function PropertiesDrawer({shape, isOpen, setIsOpen}: PropertiesDrawerProps) {
                                 setSelectedCompatibility(compatibility);
                                 setShowCompatibilityModal(true)
                             }}>
-                                <Col>{compatibility.product.name}</Col>
+                                <Col>{compatibility.id}</Col>
                                 <Col>{compatibility.time}{compatibility.timeUnit}</Col>
                             </Row>
                         </Grid>

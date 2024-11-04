@@ -19,7 +19,7 @@ export class ExecutorElement extends BaseElement {
 
         return {
             value: this.id,
-            label: this.name,
+            label: this.name ? this.name : this.id,
             children: children
         }
     }

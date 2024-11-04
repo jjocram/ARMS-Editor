@@ -11,12 +11,10 @@ import {
     Modal,
     Stack
 } from "rsuite";
-import Product from "../../Models/Product.ts";
 import {useEffect, useState} from "react";
 import {ExecutorElement} from "../../Models/ExecutorElement.ts";
 import {ActivityElement} from "../../Models/ActivityElement.ts";
 import {useModelerRef} from "../../ModelerContext.ts";
-import ProductPicker from "../ProductPicker.tsx";
 import Compatibility, {AcceptedTimeUnit, AccessoryCompatibility} from "../../Models/Compatibility.ts";
 import {generateId} from "../../Utils.ts";
 import {Accessory} from "../../Models/Accessory.ts";
@@ -46,7 +44,7 @@ export default function CompatibilityModal({
                                                compatibility,
                                                activity
                                            }: CompatibilityModalProps) {
-    const [product, setProduct] = useState<Product | undefined>(undefined);
+    const [productProperties, setProductProperties] = useState<Array<[string, string]>>([]);
     const [time, setTime] = useState<number | undefined | null>(undefined);
     const [timeUnit, setTimeUnit] = useState<AcceptedTimeUnit | undefined | null>(undefined);
     const [batch, setBatch] = useState<number | undefined | null>(undefined);
@@ -56,7 +54,7 @@ export default function CompatibilityModal({
 
     useEffect(() => {
         if (compatibility) {
-            setProduct(compatibility?.product);
+            setProductProperties([...compatibility?.productProperties.entries()]);
             setTime(compatibility?.time);
             setTimeUnit(compatibility?.timeUnit);
             setBatch(compatibility?.batchQuantity);
@@ -69,7 +67,7 @@ export default function CompatibilityModal({
                 return accessoryInput;
             }));
         } else {
-            setProduct(undefined);
+            setProductProperties([]);
             setTime(undefined);
             setTimeUnit(undefined);
         }
@@ -82,7 +80,7 @@ export default function CompatibilityModal({
                 compatibility.time = time!;
                 compatibility.timeUnit = timeUnit!;
                 compatibility.batchQuantity = batch!;
-                compatibility.product = product!;
+                compatibility.productProperties = new Map<string, string>(productProperties);
                 compatibility.accessories = accessories.map(accessoryInput => new AccessoryCompatibility(accessoryInput.id, accessoryInput.quantity!));
                 compatibility.save(modelContext.modeler.current!);
             } else {
@@ -93,7 +91,7 @@ export default function CompatibilityModal({
                     batch!,
                     activity.id,
                     executor!.id,
-                    product!,
+                    new Map<string, string>(productProperties),
                     accessories.map(accessoryInput => new AccessoryCompatibility(accessoryInput.id, accessoryInput.quantity!))
                 );
                 newCompatibility.save(modelContext.modeler.current!);
@@ -106,7 +104,7 @@ export default function CompatibilityModal({
     }
 
     function canSave(): boolean {
-        if (!product || !time || !timeUnit || !batch || !executor) {
+        if (!time || !timeUnit || !batch || !executor) {
             return false;
         }
 
@@ -147,6 +145,18 @@ export default function CompatibilityModal({
         setAccessories(prevState => prevState.filter(a => a.id !== accessoryInput.id))
     }
 
+    function addNewProductProperty() {
+        setProductProperties(prevState => [...prevState, ["", ""]]);
+    }
+
+    function updateKeyProductProperty(index: number, newKey: string) {
+        setProductProperties(prevState => prevState.map((item, i) => i === index ? [newKey, item[1]] : item))
+    }
+
+    function updateValueProductProperty(index: number, newValue: string) {
+        setProductProperties(prevState => prevState.map((item, i) => i === index ? [item[0], newValue] : item))
+    }
+
     return (
         <Modal backdrop="static" keyboard={false} open={showModal} onClose={() => closeModal(false)}>
             <Modal.Header>
@@ -165,10 +175,21 @@ export default function CompatibilityModal({
 
                 <Divider/>
 
-                <InputGroup>
-                    <InputGroup.Addon>Product</InputGroup.Addon>
-                    <ProductPicker product={product!} setProduct={setProduct} whichTypes="final"/>
-                </InputGroup>
+                <Heading>Product properties</Heading>
+                {productProperties.map(([key, value], index) => (
+                    <HStack key={index}>
+                        <InputGroup>
+                            <Input placeholder="Key" value={key} onChange={newKey => updateKeyProductProperty(index, newKey)}/>
+                            <Input placeholder="Value" value={value}
+                                   onChange={newValue => updateValueProductProperty(index, newValue)}/>
+                        </InputGroup>
+                    </HStack>
+                ))}
+                <IconButton icon={<AddOutlineIcon/>} onClick={addNewProductProperty}/>
+
+                <Divider/>
+
+                <Heading>Simulation data</Heading>
 
                 <InputGroup>
                     <InputGroup.Addon>Time</InputGroup.Addon>
@@ -194,7 +215,8 @@ export default function CompatibilityModal({
                             <InputNumber placeholder="Quantity" value={accessoryInput.quantity} min={1}
                                          onChange={value => setAccessoryQuantity(accessoryInput, value as number)}/>
                         </InputGroup>
-                        <IconButton icon={<MinusRoundIcon/>} color="red" appearance="primary" onClick={() => handleRemoveAccessory(accessoryInput)}/>
+                        <IconButton icon={<MinusRoundIcon/>} color="red" appearance="primary"
+                                    onClick={() => handleRemoveAccessory(accessoryInput)}/>
                     </HStack>
                 ))}
                 <IconButton icon={<AddOutlineIcon/>} onClick={addNewAccessory}/>

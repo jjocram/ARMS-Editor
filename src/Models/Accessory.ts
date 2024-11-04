@@ -38,7 +38,7 @@ export class Accessory extends ExtensionElement {
 
     deleteFromExtensionElements(oldValues: Array<Shape>): Array<Shape> {
         // Remove factory:accessory in the first level of the array
-        var newValues = oldValues.filter(element => element.id !== this.id);
+        let newValues = oldValues.filter(element => element.id !== this.id);
 
         // Remove factory:compatibilityAccessory with this.id in each compatibility and update each compatibility
         newValues = newValues

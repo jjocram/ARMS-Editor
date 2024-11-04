@@ -153,6 +153,21 @@
       ]
     },
     {
+      "name": "ProductProperty",
+      "properties": [
+        {
+          "name": "key",
+          "isAttr": true,
+          "type": "String"
+        },
+        {
+          "name": "value",
+          "isAttr": true,
+          "type": "String"
+        }
+      ]
+    },
+    {
       "name": "AccessoryCompatibility",
       "properties": [
         {
@@ -204,9 +219,10 @@
           "type": "String"
         },
         {
-          "name": "idProduct",
-          "isAttr": true,
-          "type": "String"
+          "name": "productProperties",
+          "isAttr": false,
+          "isMany": true,
+          "type": "ProductProperty"
         },
         {
           "name": "accessories",
