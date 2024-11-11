@@ -1,5 +1,4 @@
 import {TreeNode} from "rsuite/cjs/internals/Tree/types";
-import {ButtonTreeNode} from "../components/ButtonTreeNode.ts";
 import {Moddle} from "bpmn-js/lib/model/Types";
 import {Shape} from "bpmn-js/lib/model/Types.ts";
 import ExtensionElement from "./ExtensionElement.ts";
@@ -14,14 +13,6 @@ export class TransformationIO {
         this.inventoryId = inventoryId;
         this.quantity = quantity;
     }
-
-    toTreeNode(transformationId: string): TreeNode {
-        return {
-            value: `${this.id}@${transformationId}`,
-            label: JSON.stringify(this)
-        }
-    }
-
 }
 
 export class Transformation extends ExtensionElement {
@@ -45,27 +36,6 @@ export class Transformation extends ExtensionElement {
         return {
             value: this.id,
             label: this.id,
-            children: [this.inputsTreeNode(), this.outputsTreeNode()]
-        }
-    }
-
-    inputsTreeNode(): TreeNode {
-        const inputsTreeNode = this.inputs.map(input => input.toTreeNode(this.id));
-        inputsTreeNode.push(ButtonTreeNode(`Inputs@${this.id}`));
-        return {
-            value: `Inputs@${this.id}`,
-            label: `Inputs`,
-            children: inputsTreeNode
-        }
-    }
-
-    outputsTreeNode(): TreeNode {
-        const inputsTreeNode = this.outputs.map(output => output.toTreeNode(this.id));
-        inputsTreeNode.push(ButtonTreeNode(`Inputs@${this.id}`));
-        return {
-            value: `Outputs@${this.id}`,
-            label: `Outputs`,
-            children: inputsTreeNode
         }
     }
 

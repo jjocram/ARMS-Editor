@@ -22,7 +22,7 @@ import {ExecutorElement} from "../../Models/ExecutorElement.ts";
 import CompatibilityModal from "./CompatibilityModal.tsx";
 import {ButtonTreeNode} from "../ButtonTreeNode.ts";
 import {TreeNode} from "rsuite/cjs/internals/Tree/types";
-import {Transformation, TransformationIO} from "../../Models/Transformation.ts";
+import {Transformation} from "../../Models/Transformation.ts";
 import TransformationModal from "./TransformationModal.tsx";
 import Compatibility from "../../Models/Compatibility.ts";
 import MinusRoundIcon from "@rsuite/icons/MinusRound";
@@ -155,57 +155,30 @@ function PropertiesDrawer({shape, isOpen, setIsOpen}: PropertiesDrawerProps) {
     }
 
     function renderLabelForTransformation(element: TreeNode) {
-        if (element.children) {
-            return element.label;
-        }
-
         const dataLabel = element.label as string;
 
         if (dataLabel.startsWith("button")) {
             const buttonType = dataLabel.split("@")[1];
             if (buttonType.startsWith("Activity")) {
-                // Render button for completely new Transformation
+                // Render button for a new Transformation
                 return (<Button onClick={() => {
                     setShowTransformationModal(true);
                     setSelectedTransformation(undefined)
-                }}>Add transformation for a product</Button>)
-            } else if (buttonType.startsWith("Inputs")) {
-                // Render button for adding a new product to inputs
-                const transformationId = dataLabel.split("@")[2];
-                const transformation = modelerRef.transformations.get(transformationId);
-                return (<Button onClick={() => {
-                    setSelectedTransformation(transformation);
-                    setShowTransformationModal(true)
-                }}>Add a new product to inputs</Button>)
-            } else if (buttonType.startsWith("Outputs")) {
-                // Render button for adding a new product to outputs
-                const transformationId = dataLabel.split("@")[2];
-                const transformation = modelerRef.transformations.get(transformationId);
-                return (<Button onClick={() => {
-                    setSelectedTransformation(transformation);
-                    setShowTransformationModal(true)
-                }}>Add a new product to outputs</Button>)
+                }}>Add transformation</Button>)
             } else {
                 throw new Error(`Type of button ${dataLabel} in transformation not recognized`)
             }
         }
 
-        const transformationIOJSON = JSON.parse(dataLabel);
-        const transformationIO = new TransformationIO(
-            transformationIOJSON["id"],
-            transformationIOJSON["productType"],
-            transformationIOJSON["quantity"],
-        );
         return (
             <Grid fluid>
                 <Row className="show-grid, disable-double-click" onDoubleClick={() => {
-                    const transformationId = (element.value! as string).split("@")[1];
-                    const transformation = modelerRef.transformations.get(transformationId);
+                    const transformation = modelerRef.transformations.get(element.value as string);
+                    console.log(transformation);
                     setSelectedTransformation(transformation);
                     setShowTransformationModal(true);
                 }}>
-                    <Col>{transformationIO.inventoryId}</Col>
-                    <Col>{transformationIO.quantity}</Col>
+                    <Col>{dataLabel}</Col>
                 </Row>
             </Grid>
         )

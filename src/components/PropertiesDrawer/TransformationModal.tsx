@@ -87,11 +87,16 @@ export default function TransformationModal({
         const allIOGood = [...inputs, ...outputs]
             .map(input => (input.inventory != undefined && input.quantity != undefined))
             .reduce((a, b) => a && b, true);
-        if (!productProperties || !allIOGood) {
-            return false;
-        }
 
-        return true;
+        const allProductPropertiesGood = productProperties
+            .map(([key, value]) => key.length > 0 && value.length > 0)
+            .reduce((a, b) => a && b, true);
+
+        const allTransformationToApplyGood = transformationToApply
+            .map(([key, value]) => key.length > 0 && value.length > 0)
+            .reduce((a, b) => a && b, true);
+
+        return (allIOGood && allProductPropertiesGood && allTransformationToApplyGood);
     }
 
     function setIOQuantity(io: InputOutput, newQuantity: number, set: React.Dispatch<React.SetStateAction<InputOutput[]>>) {

@@ -13,7 +13,7 @@ export default class Inventory extends BaseElement{
     toItemData(): ItemDataType {
         return {
             value: this.id,
-            label: this.name
+            label: this.name.length > 0 ? this.name : this.id
         };
     }
 
