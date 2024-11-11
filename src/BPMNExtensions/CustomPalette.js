@@ -25,6 +25,19 @@ export default class CustomPalette {
       };
     }
 
+    function createInventory() {
+      return function (event) {
+        const businessObject = bpmnFactory.create("factory:Inventory");
+
+        const shape = elementFactory.createShape({
+          type: "factory:Inventory",
+          businessObject: businessObject
+        });
+
+        create.start(event, shape);
+      }
+    }
+
     const additionalEntries = {
       "create.Executor": {
         group: "factory",
@@ -33,6 +46,15 @@ export default class CustomPalette {
         action: {
           dragstart: createTask(),
           click: createTask()
+        }
+      },
+      "create.Inventory": {
+        group: "factory",
+        className: "bpmn-icon-data-store",
+        title: translate("Create Inventory"),
+        action: {
+          dragstart: createInventory(),
+          click: createInventory()
         }
       }
     };

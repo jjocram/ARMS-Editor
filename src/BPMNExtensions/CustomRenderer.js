@@ -33,95 +33,45 @@ export default class CustomRenderer extends BaseRenderer {
     this.pathMap = pathMap;
   }
 
+  // Not used directly but called by something else. Leave it here
   canRender(element) {
-    return isAny(element, ["factory:Executor", "factory:Connection", "factory:Batch"]) && !element.labelTarget;
+    return isAny(element, ["factory:Executor", "factory:Connection", "factory:Inventory"]) && !element.labelTarget;
   }
 
   drawShape(parentNode, element, handler) {
-    var rect;
-
-    if (is(element, "factory:Executor")) {
-
-      rect = drawHexagon(parentNode, element.width, element.height);
-
-      this.renderEmbeddedLabel(
-        parentNode,
-        element,
-        "center-middle",
-        getLabelColor(element, this.defaultLabelColor, this.defaultStrokeColor)
-      );
-
-      return rect;
-    } else if (is(element, "factory:Batch")) {
-      element.type = "bpmn:Task";
-      element.width = 100;
-      element.height = 80;
-      const shape = this.bpmnRenderer.drawShape(parentNode, element, handler);
-      element.type = "factory:Batch";
-
-      let color;
-
-      let hasBatchIncoming = true;
-      let hasBatchOutgoing = true;
-
-      //check if all incoming executor have products that have batch > 1
-      for (let i = 0; i < element.businessObject.incoming?.length; i++) {
-        if (element.businessObject.incoming[i]?.sourceRef?.product) {
-          for (let j = 0; j < element.businessObject.incoming[i]?.sourceRef?.product.length; j++) {
-            if (element.businessObject.incoming[i]?.sourceRef?.product[j]?.batch <= 1) {
-              hasBatchIncoming = false;
-              break;
-            }
-          }
-        }
-      }
-
-      //check if all outgoing executor have products that have batch > 1
-      for (let i = 0; i < element.businessObject.outgoing?.length; i++) {
-        if (element.businessObject.outgoing[i]?.targetRef?.product) {
-          for (let j = 0; j < element.businessObject.outgoing[i]?.targetRef?.product.length; j++) {
-            if (element.businessObject.outgoing[i]?.targetRef?.product[j]?.batch <= 1) {
-              hasBatchOutgoing = false;
-              break;
-            }
-          }
-        }
-      }
-
-    
-      if (hasBatchIncoming && hasBatchOutgoing) {
-        color = "none";
-      } else {
-        color = "orange";
-      }
-
-      //create gear icon
-      var pathGear = this.pathMap.getScaledPath('TASK_TYPE_SERVICE', {
-        abspos: {
-          x: 12,
-          y: 18,
-        }
-      });
-
-      //draw gear icon
-      const gear = this.drawPath(parentNode, pathGear, {
-        fill: color,
-        stroke: "black",
-        strokeWidth: 1
-      });
-
-      //scale gear icon
-      svgAttr(gear, {
-        transform: "scale(1.2)"
-      });
-
-      return shape;
+    const shapeRenderers = {
+      "factory:Executor": this.renderExecutorShape.bind(this),
+      "factory:Inventory": this.renderInventoryShape.bind(this),
     }
-    else {
-      return this.bpmnRenderer.drawShape(parentNode, element, handler);
-    }
+
+    const renderShape = shapeRenderers[element.type];
+
+    return renderShape ? renderShape(parentNode, element) : this.bpmnRenderer.drawShape(parentNode, element, handler);
   }
 
+  // Other functions
+
+  renderExecutorShape(parentNode, element) {
+    const hexagon = drawHexagon(parentNode, element.width, element.height);
+
+    this.renderEmbeddedLabel(
+      parentNode,
+      element,
+      "center-middle",
+      getLabelColor(element, this.defaultLabelColor, this.defaultStrokeColor)
+    );
+
+    return hexagon;
+  }
+
+  renderInventoryShape(parentNode, element) {
+    const originalType = element.type;
+    element.type = "bpmn:DataStoreReference";
+    const shape = this.bpmnRenderer.drawShape(parentNode, element);
+    element.type = originalType; // Revert type after rendering
+
+    return shape;
+  }
 
   drawConnection(parentNode, element) {
     const waypoints = element.waypoints;
@@ -222,8 +172,6 @@ CustomRenderer.$inject = [
   "styles",
   "pathMap"
 ];
-
-// helpers //////////
 
 function drawHexagon(parentNode, width, height) {
   const polygon = svgCreate("polygon");

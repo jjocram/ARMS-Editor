@@ -1,5 +1,19 @@
-import {Accordion, Button, Col, Drawer, Grid, HStack, IconButton, Input, InputGroup, Row, Stack, Tree} from "rsuite";
-import {useEffect, useState} from "react";
+import {
+    Accordion,
+    Button,
+    Col,
+    Drawer,
+    Grid,
+    HStack,
+    IconButton,
+    Input,
+    InputGroup,
+    InputNumber,
+    Row,
+    Stack,
+    Tree
+} from "rsuite";
+import React, {useEffect, useState} from "react";
 import {useModelerRef} from "../../ModelerContext.ts";
 import {BaseElement} from "../../Models/BaseElement.ts";
 import {Shape} from "bpmn-js/lib/model/Types.ts";
@@ -12,6 +26,7 @@ import {Transformation, TransformationIO} from "../../Models/Transformation.ts";
 import TransformationModal from "./TransformationModal.tsx";
 import Compatibility from "../../Models/Compatibility.ts";
 import MinusRoundIcon from "@rsuite/icons/MinusRound";
+import Inventory from "../../Models/Inventory.ts";
 
 interface PropertiesDrawerProps {
     shape: Shape | null,
@@ -36,6 +51,9 @@ function PropertiesDrawer({shape, isOpen, setIsOpen}: PropertiesDrawerProps) {
                 setElement(new ActivityElement(shape, modelerRef.modeler.current!, modelerRef.compatibilities!));
             } else if (shape.type === "factory:Executor") {
                 setElement(new ExecutorElement(shape, []));
+            } else if (shape.type === "factory:Inventory") {
+                console.log(shape);
+                setElement(new Inventory(shape, 0));
             } else {
                 setElement(new BaseElement(shape));
             }
@@ -182,12 +200,12 @@ function PropertiesDrawer({shape, isOpen, setIsOpen}: PropertiesDrawerProps) {
         return (
             <Grid fluid>
                 <Row className="show-grid, disable-double-click" onDoubleClick={() => {
-                    const trasformationId = (element.value! as string).split("@")[1];
-                    const transformation = modelerRef.transformations.get(trasformationId);
+                    const transformationId = (element.value! as string).split("@")[1];
+                    const transformation = modelerRef.transformations.get(transformationId);
                     setSelectedTransformation(transformation);
                     setShowTransformationModal(true);
                 }}>
-                    <Col>{transformationIO.productType}</Col>
+                    <Col>{transformationIO.inventoryId}</Col>
                     <Col>{transformationIO.quantity}</Col>
                 </Row>
             </Grid>
@@ -243,6 +261,42 @@ function PropertiesDrawer({shape, isOpen, setIsOpen}: PropertiesDrawerProps) {
         )
     }
 
+    function renderAdditionalInfo() {
+        if (element.additionalInfo().length === 0) {
+            return (<></>);
+        }
+
+        const additionalInfoMap: Record<string, () => React.ReactElement> = {
+            startQuantity:  () => {
+                const inventoryElement = element as Inventory;
+                return (
+                    <InputGroup key="startQuantity">
+                        <InputGroup.Addon>Start quantity</InputGroup.Addon>
+                        <InputNumber value={inventoryElement.startQuantity} placeholder="Start quantity"
+                                     onChange={newValue => setElement((prevElement) => {
+                                         return Object.assign(
+                                             Object.create(Object.getPrototypeOf(prevElement)),
+                                             prevElement,
+                                             {startQuantity: newValue}
+                                         );
+                                     })}/>
+                    </InputGroup>
+                );
+            }
+        }
+
+        return (
+            <Accordion.Panel header="Additional info">
+                <Stack spacing={10} direction="column" alignItems="flex-start">
+                    {element.additionalInfo().map(infoKey => {
+                        const renderFunction = additionalInfoMap[infoKey];
+                        return renderFunction ? renderFunction() : (<p>{infoKey} not found</p>);
+                    })}
+                </Stack>
+            </Accordion.Panel>
+        )
+    }
+
     return (
         <Drawer enforceFocus={false} open={isOpen} onClose={handleSaveElement}>
             <Drawer.Header>
@@ -251,6 +305,7 @@ function PropertiesDrawer({shape, isOpen, setIsOpen}: PropertiesDrawerProps) {
             <Drawer.Body>
                 <Accordion>
                     {renderBaseInfo()}
+                    {renderAdditionalInfo()}
                     {renderCompatibilities()}
                     {renderTransformations()}
                 </Accordion>

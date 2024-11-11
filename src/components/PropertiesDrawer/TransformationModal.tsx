@@ -63,23 +63,13 @@ export default function TransformationModal({
     function closeModal(withSave: boolean) {
         if (withSave) {
             // Pre-condition: product and all inputs and outputs are ready to be saved thanks to canSave()
-            if (transformation) {
-                // Editing transformation
-                transformation.product = product!;
-                transformation.inputs = inputs.map(input => new TransformationIO(input.id, input.product?.name!, input.quantity!));
-                transformation.outputs = outputs.map(output => new TransformationIO(output.id, output.product?.name!, output.quantity!));
-                transformation.save(modelerContext.modeler.current!);
+            const transformationToSave = transformation ?? new Transformation(generateId("Transformation"), activity.id, product!);
+            transformationToSave.product = product!;
+            transformationToSave.inputs = inputs.map(input => new TransformationIO(input.id, input.product?.name!, input.quantity!));
+            transformationToSave.outputs = outputs.map(output => new TransformationIO(output.id, output.product?.name!, output.quantity!));
+            transformationToSave.save(modelerContext.modeler.current!);
 
-                modelerContext.transformations.set(transformation.id, transformation);
-            } else {
-                // Creating new transformation
-                const newTransformation = new Transformation(generateId("Transformation"), activity.id, product!);
-                newTransformation.inputs = inputs.map(input => new TransformationIO(input.id, input.product?.name!, input.quantity!));
-                newTransformation.outputs = outputs.map(output => new TransformationIO(output.id, output.product?.name!, output.quantity!));
-                newTransformation.save(modelerContext.modeler.current!);
-
-                modelerContext.transformations.set(newTransformation.id, newTransformation);
-            }
+            modelerContext.transformations.set(transformationToSave.id, transformationToSave);
         }
 
         setShowModal(false);

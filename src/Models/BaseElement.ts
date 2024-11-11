@@ -46,4 +46,8 @@ export class BaseElement {
     needAccessories(): boolean {
         return false;
     }
+
+    additionalInfo(): Array<string> {
+        return [];
+    }
 }

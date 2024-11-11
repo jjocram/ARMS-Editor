@@ -47,17 +47,15 @@ export default function CompatibilityModal({
     const [productProperties, setProductProperties] = useState<Array<[string, string]>>([]);
     const [time, setTime] = useState<number | undefined | null>(undefined);
     const [timeUnit, setTimeUnit] = useState<AcceptedTimeUnit | undefined | null>(undefined);
-    const [batch, setBatch] = useState<number | undefined | null>(undefined);
     const [accessories, setAccessories] = useState<Array<AccessoryInput>>([]);
 
     const modelContext = useModelerRef();
 
     useEffect(() => {
         if (compatibility) {
-            setProductProperties([...compatibility?.productProperties.entries()]);
+            setProductProperties([...compatibility!.productProperties.entries()]);
             setTime(compatibility?.time);
             setTimeUnit(compatibility?.timeUnit);
-            setBatch(compatibility?.batchQuantity);
             setAccessories(compatibility?.accessories.map(accessory => {
                 const accessoryInput: AccessoryInput = {
                     id: accessory.id,
@@ -79,7 +77,6 @@ export default function CompatibilityModal({
             if (compatibility) {
                 compatibility.time = time!;
                 compatibility.timeUnit = timeUnit!;
-                compatibility.batchQuantity = batch!;
                 compatibility.productProperties = new Map<string, string>(productProperties);
                 compatibility.accessories = accessories.map(accessoryInput => new AccessoryCompatibility(accessoryInput.id, accessoryInput.quantity!));
                 compatibility.save(modelContext.modeler.current!);
@@ -88,7 +85,6 @@ export default function CompatibilityModal({
                     generateId("Compatibility"),
                     time!,
                     timeUnit!,
-                    batch!,
                     activity.id,
                     executor!.id,
                     new Map<string, string>(productProperties),
@@ -104,7 +100,7 @@ export default function CompatibilityModal({
     }
 
     function canSave(): boolean {
-        if (!time || !timeUnit || !batch || !executor) {
+        if (!time || !timeUnit || !executor) {
             return false;
         }
 
@@ -196,11 +192,6 @@ export default function CompatibilityModal({
                     <InputNumber value={time} min={0} onChange={value => setTime(value as number)}/>
                     <InputPicker data={Compatibility.acceptedTimeUnitsToItemDataType} value={timeUnit}
                                  onChange={value => setTimeUnit(value as AcceptedTimeUnit)}/>
-                </InputGroup>
-
-                <InputGroup>
-                    <InputGroup.Addon>Batch size</InputGroup.Addon>
-                    <InputNumber value={batch} min={1} onChange={value => setBatch(value as number)}/>
                 </InputGroup>
 
                 <Divider/>

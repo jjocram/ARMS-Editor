@@ -19,18 +19,16 @@ export class AccessoryCompatibility {
 export default class Compatibility extends ExtensionElement {
     time: number;
     timeUnit: AcceptedTimeUnit;
-    batchQuantity: number;
     idActivity: string;
     idExecutor: string;
     productProperties: Map<string, string>;
     accessories: Array<AccessoryCompatibility>;
 
 
-    constructor(id: string, time: number, timeUnit: AcceptedTimeUnit, batchQuantity: number, idActivity: string, idExecutor: string, productProperties: Map<string, string>, accessories: Array<AccessoryCompatibility>) {
+    constructor(id: string, time: number, timeUnit: AcceptedTimeUnit, idActivity: string, idExecutor: string, productProperties: Map<string, string>, accessories: Array<AccessoryCompatibility>) {
         super(id);
         this.time = time;
         this.timeUnit = timeUnit;
-        this.batchQuantity = batchQuantity;
         this.idActivity = idActivity;
         this.idExecutor = idExecutor;
         this.productProperties = productProperties;
@@ -56,7 +54,6 @@ export default class Compatibility extends ExtensionElement {
             id: this.id,
             time: this.time,
             timeUnit: this.timeUnit,
-            batch: this.batchQuantity,
             idActivity: this.idActivity,
             idExecutor: this.idExecutor,
             productProperties: Array.from(this.productProperties, ([key, value]) => {
@@ -77,7 +74,6 @@ export default class Compatibility extends ExtensionElement {
     overwrite(oldElement: Shape, moddle: Moddle): Shape {
         oldElement.time = this.time;
         oldElement.timeUnit = this.timeUnit;
-        oldElement.batch = this.batchQuantity;
         oldElement.productProperties = [...this.productProperties.entries()].map(([key, value]) => {
             const propertyToChange = oldElement.productProperties?.find((p: Shape) => p.key === key);
             if (propertyToChange) {

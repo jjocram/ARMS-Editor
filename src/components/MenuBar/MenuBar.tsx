@@ -2,14 +2,17 @@ import {ButtonToolbar, Dropdown} from "rsuite";
 import DropdownItem from "rsuite/DropdownItem";
 import {useRef, useState} from "react";
 import {useModelerRef} from "../../ModelerContext.ts";
-import ProductListModal from "../ProductListModal.tsx";
 import AccessoryListModal from "../AccessoryListModal.tsx";
+import InventoryListModal from "../InventoryListModal.tsx";
 
-// @ts-ignore
-function MenuBar({setXmlDiagramToEmpty}) {
+interface MenuBarProps {
+    setXmlDiagramToEmpty: () => void
+}
+
+export default function MenuBar({setXmlDiagramToEmpty} : MenuBarProps) {
     const modelerRef = useModelerRef();
 
-    const [showProductsModal, setShowProductsModal] = useState(false);
+    const [showInventoriesModal, setShowInventoriesModal] = useState(false);
 
     const [showAccessoryModal, setShowAccessoryModal] = useState(false);
 
@@ -60,15 +63,13 @@ function MenuBar({setXmlDiagramToEmpty}) {
                     <DropdownItem>Show/Hide Warnings</DropdownItem>
                 </Dropdown>
                 <Dropdown title="Simulation">
-                    <DropdownItem onSelect={() => setShowProductsModal(true)}>Products</DropdownItem>
+                    <DropdownItem onSelect={() => setShowInventoriesModal(true)}>Inventories</DropdownItem>
                     <DropdownItem onSelect={() => setShowAccessoryModal(true)}>Accessories</DropdownItem>
                 </Dropdown>
             </ButtonToolbar>
 
-            <ProductListModal show={showProductsModal} setShow={setShowProductsModal}/>
+            <InventoryListModal show={showInventoriesModal} setShow={setShowInventoriesModal}/>
             <AccessoryListModal show={showAccessoryModal} setShow={setShowAccessoryModal}/>
         </>
     )
 }
-
-export default MenuBar;

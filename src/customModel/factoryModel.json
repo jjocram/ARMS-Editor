@@ -61,7 +61,7 @@
           "type": "String"
         },
         {
-          "name": "productType",
+          "name": "inventoryId",
           "isAttr": true,
           "type": "String"
         },
@@ -84,12 +84,25 @@
           "type": "String"
         },
         {
-          "name": "productType",
+          "name": "inventoryId",
           "isAttr": true,
           "type": "String"
         },
         {
           "name": "quantity",
+          "isAttr": true,
+          "type": "Integer"
+        }
+      ]
+    },
+    {
+      "name": "Inventory",
+      "superClass": [
+        "bpmn:DataStoreReference"
+      ],
+      "properties": [
+        {
+          "name": "startQuantity",
           "isAttr": true,
           "type": "Integer"
         }
@@ -112,9 +125,14 @@
           "type": "String"
         },
         {
-          "name": "productId",
-          "isAttr": true,
-          "type": "String"
+          "name": "productProperties",
+          "isMany": true,
+          "type": "TransformationProductProperty"
+        },
+        {
+          "name": "transformationToApply",
+          "isMany": true,
+          "type": "TransformationProductPropertyToApply"
         },
         {
           "name": "inputs",
@@ -154,6 +172,36 @@
     },
     {
       "name": "ProductProperty",
+      "properties": [
+        {
+          "name": "key",
+          "isAttr": true,
+          "type": "String"
+        },
+        {
+          "name": "value",
+          "isAttr": true,
+          "type": "String"
+        }
+      ]
+    },
+    {
+      "name": "TransformationProductProperty",
+      "properties": [
+        {
+          "name": "key",
+          "isAttr": true,
+          "type": "String"
+        },
+        {
+          "name": "value",
+          "isAttr": true,
+          "type": "String"
+        }
+      ]
+    },
+    {
+      "name": "TransformationProductPropertyToApply",
       "properties": [
         {
           "name": "key",
@@ -220,7 +268,6 @@
         },
         {
           "name": "productProperties",
-          "isAttr": false,
           "isMany": true,
           "type": "ProductProperty"
         },
@@ -230,13 +277,6 @@
           "isMany": true
         }
       ]
-    },
-    {
-      "name": "Batch",
-      "superClass": [
-        "bpmn:Task"
-      ],
-      "properties": []
     }
   ],
   "enumerations": [],

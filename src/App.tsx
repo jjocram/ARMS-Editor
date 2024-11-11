@@ -98,7 +98,11 @@ function App() {
 
             const transformations = extensionElements
                 .filter((element: Shape) => is(element, "factory:Transformation"))
-                .map((element: Shape) => new Transformation(element.id, element.activityId, modelerContext.products.get(element.productId)!))
+                .map((element: Shape) => {
+                    const productProperties = new Map<string, string>(element.productProperties.map((p: Shape) => [p.key, p.value]));
+                    const transformationToApply = new Map<string, string>(element.transformationToApply.map((p: Shape) => [p.key, p.value]));
+                    new Transformation(element.id, element.activityId, productProperties, transformationToApply)
+                })
                 .map((transformation: Transformation) => [transformation.id, transformation]);
             modelerContext.transformations = new Map(transformations);
             modelerContext.transformations.forEach((transformation: Transformation) => {
@@ -107,14 +111,14 @@ function App() {
                     .filter((element: Shape) => element.id === transformation.id)
                     .map((element: Shape) => element.inputs ?? [])
                     .flatMap((element: Shape) => element)
-                    .flatMap((element: Shape) => new TransformationIO(element.id, element.productType, element.quantity));
+                    .flatMap((element: Shape) => new TransformationIO(element.id, element.inventoryId, element.quantity));
 
                 const outputs = extensionElements
                     .filter((element: Shape) => is(element, "factory:Transformation"))
                     .filter((element: Shape) => element.id === transformation.id)
                     .map((element: Shape) => element.outputs ?? [])
                     .flatMap((element: Shape) => element)
-                    .flatMap((element: Shape) => new TransformationIO(element.id, element.productType, element.quantity));
+                    .flatMap((element: Shape) => new TransformationIO(element.id, element.inventoryId, element.quantity));
 
                 transformation.inputs = inputs;
                 transformation.outputs = outputs;
@@ -123,8 +127,8 @@ function App() {
             modelerContext.compatibilities = extensionElements
                 .filter((element: Shape) => is(element, "factory:Compatibility"))
                 .map((element: Shape) => {
-                    const product = modelerContext.products.get(element.idProduct)!;
-                    return new Compatibility(element.id, element.time, element.timeUnit, element.batch, element.idActivity, element.idExecutor, product, [])
+                    const productProperties = new Map<string, string>(element.productProperties.map((p: Shape) => [p.key, p.value]));
+                    return new Compatibility(element.id, element.time, element.timeUnit, element.idActivity, element.idExecutor, productProperties, [])
                 });
             modelerContext.compatibilities.forEach((compatibility: Compatibility) => {
                 compatibility.accessories = extensionElements

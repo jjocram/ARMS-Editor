@@ -1,88 +1,89 @@
-import { assign, forEach, omit } from "min-dash";
+import {assign, forEach, omit} from "min-dash";
 
 import inherits from "inherits-browser";
 
 import BpmnElementFactory from "bpmn-js/lib/features/modeling/ElementFactory";
-import { DEFAULT_LABEL_SIZE } from "bpmn-js/lib/util/LabelUtil";
+import {DEFAULT_LABEL_SIZE} from "bpmn-js/lib/util/LabelUtil";
 
-import { ensureCompatDiRef } from "bpmn-js/lib/util/CompatibilityUtil";
+import {ensureCompatDiRef} from "bpmn-js/lib/util/CompatibilityUtil";
 
-import { isAny } from "bpmn-js/lib/features/modeling/util/ModelingUtil";
+import {isAny} from "bpmn-js/lib/features/modeling/util/ModelingUtil";
+import {is} from "bpmn-js/lib/util/ModelUtil";
 
 /**
  * A custom factory that knows how to create BPMN _and_ custom elements.
  */
 export default function CustomElementFactory(bpmnFactory, moddle) {
-  BpmnElementFactory.call(this, bpmnFactory, moddle);
+    BpmnElementFactory.call(this, bpmnFactory, moddle);
 
-  var self = this;
+    var self = this;
 
-  /**
-   * Create a diagram-js element with the given type (any of shape, connection, label).
-   *
-   * @param  {String} elementType
-   * @param  {Object} attrs
-   *
-   * @return {djs.model.Base}
-   */
-  this.create = function (elementType, attrs) {
-    var type = attrs.type;
+    /**
+     * Create a diagram-js element with the given type (any of shape, connection, label).
+     *
+     * @param  {String} elementType
+     * @param  {Object} attrs
+     *
+     * @return {djs.model.Base}
+     */
+    this.create = function (elementType, attrs) {
+        var type = attrs.type;
 
-    if (elementType === "label") {
-      return self._baseCreate(
-        elementType,
-        assign({ type: "label" }, DEFAULT_LABEL_SIZE, attrs)
-      );
-    }
-
-    var size,
-      businessObject = attrs.businessObject,
-      di = attrs.di;
-
-    if (/^factory:/.test(type)) {
-      if (!businessObject) {
-        businessObject = this._bpmnFactory.create(attrs.type);
-        ensureCompatDiRef(businessObject);
-      }
-
-      if (!isModdleDi(di)) {
-        var diAttrs = assign({}, di || {}, { id: businessObject.id + "_di" });
-
-        if (type === 'factory:Connection') {
-          di = this._bpmnFactory.createDiEdge(businessObject, diAttrs);
-        } else {
-          di = this._bpmnFactory.createDiShape(businessObject, diAttrs);
+        if (elementType === "label") {
+            return self._baseCreate(
+                elementType,
+                assign({type: "label"}, DEFAULT_LABEL_SIZE, attrs)
+            );
         }
-      }
 
-      size = this._getCustomElementSize(businessObject, di);
+        var size,
+            businessObject = attrs.businessObject,
+            di = attrs.di;
 
-      attrs = applyAttributes(businessObject, attrs, [
-        "processRef",
-        "isInterrupting",
-        "associationDirection",
-        "isForCompensation"
-      ]);
+        if (/^factory:/.test(type)) {
+            if (!businessObject) {
+                businessObject = this._bpmnFactory.create(attrs.type);
+                ensureCompatDiRef(businessObject);
+            }
 
-      attrs = assign(
-        {
-          id: businessObject.id
-        },
-        attrs,
-        size,
-        {
-          businessObject: businessObject,
-          di: di
+            if (!isModdleDi(di)) {
+                var diAttrs = assign({}, di || {}, {id: businessObject.id + "_di"});
+
+                if (type === 'factory:Connection') {
+                    di = this._bpmnFactory.createDiEdge(businessObject, diAttrs);
+                } else {
+                    di = this._bpmnFactory.createDiShape(businessObject, diAttrs);
+                }
+            }
+
+            size = this._getCustomElementSize(businessObject, di);
+
+            attrs = applyAttributes(businessObject, attrs, [
+                "processRef",
+                "isInterrupting",
+                "associationDirection",
+                "isForCompensation"
+            ]);
+
+            attrs = assign(
+                {
+                    id: businessObject.id
+                },
+                attrs,
+                size,
+                {
+                    businessObject: businessObject,
+                    di: di
+                }
+            );
+
+            // END minic ModdleElement API
+
+            return this._baseCreate(elementType, attrs);
         }
-      );
 
-      // END minic ModdleElement API
-
-      return this._baseCreate(elementType, attrs);
-    }
-
-    return this.createElement(elementType, attrs);
-  };
+        return this.createElement(elementType, attrs);
+    };
 }
 
 inherits(CustomElementFactory, BpmnElementFactory);
@@ -105,18 +106,19 @@ CustomElementFactory.$inject = ["bpmnFactory", "moddle"];
  * return shapes[type];
  *
  *
- * @param {String} type
+ * @param {Shape} shape
  *
  * @return {Dimensions} a {width, height} object representing the size of the element
  */
-CustomElementFactory.prototype._getCustomElementSize = function (type) {
-  var shapes = {
-    __default: { width: 120, height: 60 },
-    "factory:Executor": { width: 120, height: 60 },
-    "factory:Connection": { width: 0, height: 0 }
-  };
+CustomElementFactory.prototype._getCustomElementSize = function (shape) {
+    const shapes = {
+        "factory:Inventory": {width: 60, height: 60},
+        "factory:Executor": {width: 120, height: 60},
+        "factory:Connection": {width: 0, height: 0},
+        __default: {width: 120, height: 60}
+    }
 
-  return shapes[type] || shapes.__default;
+    return shapes[shape.$type] || shapes.__default;
 };
 
 /**
@@ -130,11 +132,11 @@ CustomElementFactory.prototype._getCustomElementSize = function (type) {
  * @return {Object} changed attrs
  */
 function applyAttributes(element, attrs, attributeNames) {
-  forEach(attributeNames, function (property) {
-    attrs = applyAttribute(element, attrs, property);
-  });
+    forEach(attributeNames, function (property) {
+        attrs = applyAttribute(element, attrs, property);
+    });
 
-  return attrs;
+    return attrs;
 }
 
 /**
@@ -148,20 +150,20 @@ function applyAttributes(element, attrs, attributeNames) {
  * @return {Object} changed attrs
  */
 function applyAttribute(element, attrs, attributeName) {
-  if (attrs[attributeName] === undefined) {
-    return attrs;
-  }
+    if (attrs[attributeName] === undefined) {
+        return attrs;
+    }
 
-  element[attributeName] = attrs[attributeName];
+    element[attributeName] = attrs[attributeName];
 
-  return omit(attrs, [attributeName]);
+    return omit(attrs, [attributeName]);
 }
 
 function isModdleDi(element) {
-  return isAny(element, [
-    "bpmndi:BPMNShape",
-    "bpmndi:BPMNEdge",
-    "bpmndi:BPMNDiagram",
-    "bpmndi:BPMNPlane"
-  ]);
+    return isAny(element, [
+        "bpmndi:BPMNShape",
+        "bpmndi:BPMNEdge",
+        "bpmndi:BPMNDiagram",
+        "bpmndi:BPMNPlane"
+    ]);
 }
