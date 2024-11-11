@@ -133,21 +133,19 @@ function PropertiesDrawer({shape, isOpen, setIsOpen}: PropertiesDrawerProps) {
             const executors = activityElement.connectedExecutors
                 .map(executor => executor.toTreeNodeWithAssociatedProducts());
             return (
-                <>
-                    <Accordion.Panel header="Compatibilities">
-                        <Tree data={executors}
-                              renderTreeNode={treeNode => {
-                                  return (
-                                      <>
-                                          {treeNode.children ? treeNode.label : renderLabelForCompatibility(treeNode.label as string)}
-                                      </>
-                                  );
-                              }}/>
-                        <CompatibilityModal showModal={showCompatibilityModal} setShowModal={setShowCompatibilityModal}
-                                            executor={selectedExecutor!} activity={activityElement}
-                                            compatibility={selectedCompatibility}/>
-                    </Accordion.Panel>
-                </>
+                <Accordion.Panel header="Compatibilities">
+                    <Tree data={executors}
+                          renderTreeNode={treeNode => {
+                              return (
+                                  <>
+                                      {treeNode.children ? treeNode.label : renderLabelForCompatibility(treeNode.label as string)}
+                                  </>
+                              );
+                          }}/>
+                    <CompatibilityModal showModal={showCompatibilityModal} setShowModal={setShowCompatibilityModal}
+                                        executor={selectedExecutor!} activity={activityElement}
+                                        compatibility={selectedCompatibility}/>
+                </Accordion.Panel>
             );
         } else {
             return null
@@ -174,7 +172,6 @@ function PropertiesDrawer({shape, isOpen, setIsOpen}: PropertiesDrawerProps) {
             <Grid fluid>
                 <Row className="show-grid, disable-double-click" onDoubleClick={() => {
                     const transformation = modelerRef.transformations.get(element.value as string);
-                    console.log(transformation);
                     setSelectedTransformation(transformation);
                     setShowTransformationModal(true);
                 }}>
@@ -239,7 +236,7 @@ function PropertiesDrawer({shape, isOpen, setIsOpen}: PropertiesDrawerProps) {
         }
 
         const additionalInfoMap: Record<string, () => React.ReactElement> = {
-            startQuantity:  () => {
+            startQuantity: () => {
                 const inventoryElement = element as Inventory;
                 return (
                     <InputGroup key="startQuantity">

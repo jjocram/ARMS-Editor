@@ -96,7 +96,7 @@ function App() {
         if (processElement) {
             console.log("Model changed... setting up model's data");
             const inventories = processElement.children
-                .filter((element: Shape) => is(element, "bpmn:Inventory"))
+                .filter((element: Shape) => element.type === "factory:Inventory")
                 .map((element: Shape) => new Inventory(element))
                 .map((inventory: Inventory) => [inventory.id, inventory])
             modelerContext.inventories = new Map(inventories);
@@ -129,8 +129,8 @@ function App() {
             const transformations = extensionElements
                 .filter((element: Shape) => is(element, "factory:Transformation"))
                 .map((element: Shape) => {
-                    const productProperties = new Map<string, string>(element.productProperties.map((p: Shape) => [p.key, p.value]));
-                    const transformationToApply = new Map<string, string>(element.transformationToApply.map((p: Shape) => [p.key, p.value]));
+                    const productProperties = new Map<string, string>(element.productProperties?.map((p: Shape) => [p.key, p.value]) ?? []);
+                    const transformationToApply = new Map<string, string>(element.transformationToApply?.map((p: Shape) => [p.key, p.value]) ?? []);
                     new Transformation(element.id, element.activityId, productProperties, transformationToApply)
                 })
                 .map((transformation: Transformation) => [transformation.id, transformation]);
@@ -157,7 +157,7 @@ function App() {
             modelerContext.compatibilities = extensionElements
                 .filter((element: Shape) => is(element, "factory:Compatibility"))
                 .map((element: Shape) => {
-                    const productProperties = new Map<string, string>(element.productProperties.map((p: Shape) => [p.key, p.value]));
+                    const productProperties = new Map<string, string>(element.productProperties?.map((p: Shape) => [p.key, p.value]) ?? []);
                     return new Compatibility(element.id, element.time, element.timeUnit, element.idActivity, element.idExecutor, productProperties, [])
                 });
             modelerContext.compatibilities.forEach((compatibility: Compatibility) => {

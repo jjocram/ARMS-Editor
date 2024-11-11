@@ -84,8 +84,12 @@ export default function TransformationModal({
     }
 
     function canSave() {
-        const allIOGood = [...inputs, ...outputs]
+        const allInputsGood = inputs
             .map(input => (input.inventory != undefined && input.quantity != undefined))
+            .reduce((a, b) => a && b, true);
+
+        const allOutputsGood = outputs
+            .map(output => (output.inventory != undefined && output.quantity != undefined))
             .reduce((a, b) => a && b, true);
 
         const allProductPropertiesGood = productProperties
@@ -96,7 +100,7 @@ export default function TransformationModal({
             .map(([key, value]) => key.length > 0 && value.length > 0)
             .reduce((a, b) => a && b, true);
 
-        return (allIOGood && allProductPropertiesGood && allTransformationToApplyGood);
+        return (allInputsGood && allOutputsGood && allProductPropertiesGood && allTransformationToApplyGood);
     }
 
     function setIOQuantity(io: InputOutput, newQuantity: number, set: React.Dispatch<React.SetStateAction<InputOutput[]>>) {
@@ -169,7 +173,7 @@ export default function TransformationModal({
                 {outputs.map(output => {
                     return (
                         <InputGroup key={output.id}>
-                            <InventoryPicker inventory={output.inventory!} setInventory={setIOInventory(output, setInputs)}/>
+                            <InventoryPicker inventory={output.inventory!} setInventory={setIOInventory(output, setOutputs)}/>
                             <InputNumber placeholder="Quantity" value={output.quantity} min={1}
                                          onChange={value => setIOQuantity(output, value as number, setOutputs)}/>
                         </InputGroup>
