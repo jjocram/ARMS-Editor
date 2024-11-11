@@ -1,12 +1,13 @@
 import {Button, Divider, Heading, IconButton, Input, InputGroup, InputNumber, Modal, Stack} from "rsuite";
 import {ActivityElement} from "../../Models/ActivityElement.ts";
-import ProductPicker from "../ProductPicker.tsx";
 import React, {useEffect, useState} from "react";
-import Product from "../../Models/Product.ts";
 import {generateId} from "../../Utils.ts";
 import AddOutlineIcon from '@rsuite/icons/AddOutline';
 import {Transformation, TransformationIO} from "../../Models/Transformation.ts";
 import {useModelerRef} from "../../ModelerContext.ts";
+import Inventory from "../../Models/Inventory.ts";
+import InventoryPicker from "../InventoryPicker.tsx";
+import ProductPropertiesModifier from "../ProductPropertiesModifier.tsx";
 
 interface TransformationModalProps {
     showModal: boolean;
@@ -17,7 +18,7 @@ interface TransformationModalProps {
 
 interface InputOutput {
     id: string;
-    product?: Product;
+    inventory?: Inventory;
     quantity?: number;
 }
 
@@ -29,18 +30,20 @@ export default function TransformationModal({
                                             }: TransformationModalProps) {
     const modelerContext = useModelerRef();
 
-    const [product, setProduct] = useState<Product | undefined>(undefined);
+    const [productProperties, setProductProperties] = useState<Array<[string, string]>>([]);
+    const [transformationToApply, setTransformationToApply] = useState<Array<[string, string]>>([]);
 
     const [inputs, setInputs] = useState<InputOutput[]>([]);
     const [outputs, setOutputs] = useState<InputOutput[]>([]);
 
     useEffect(() => {
         if (transformation) {
-            setProduct(transformation.product);
+            setProductProperties([...transformation.productProperties.entries()]);
+            setTransformationToApply([...transformation.transformationToApply.entries()]);
             setInputs(transformation.inputs.map(io => {
                 const input: InputOutput = {
                     id: io.id,
-                    product: modelerContext.products.get(io.id),
+                    inventory: modelerContext.inventories.get(io.inventoryId),
                     quantity: io.quantity
                 }
                 return input;
@@ -48,13 +51,14 @@ export default function TransformationModal({
             setOutputs(transformation.outputs.map(io => {
                 const output: InputOutput = {
                     id: io.id,
-                    product: modelerContext.products.get(io.id),
+                    inventory: modelerContext.inventories.get(io.inventoryId),
                     quantity: io.quantity
                 }
                 return output;
             }))
         } else {
-            setProduct(undefined);
+            setProductProperties([]);
+            setTransformationToApply([]);
             setInputs([]);
             setOutputs([]);
         }
@@ -62,11 +66,15 @@ export default function TransformationModal({
 
     function closeModal(withSave: boolean) {
         if (withSave) {
-            // Pre-condition: product and all inputs and outputs are ready to be saved thanks to canSave()
-            const transformationToSave = transformation ?? new Transformation(generateId("Transformation"), activity.id, product!);
-            transformationToSave.product = product!;
-            transformationToSave.inputs = inputs.map(input => new TransformationIO(input.id, input.product?.name!, input.quantity!));
-            transformationToSave.outputs = outputs.map(output => new TransformationIO(output.id, output.product?.name!, output.quantity!));
+            // Pre-condition: productProperties, transformationToApply and all inputs and outputs are ready to be saved thanks to canSave()
+            const productPropertiesToSave = new Map<string, string>(productProperties);
+            const transformationToApplyToSave = new Map<string, string>(transformationToApply);
+
+            const transformationToSave = transformation ?? new Transformation(generateId("Transformation"), activity.id, productPropertiesToSave, transformationToApplyToSave);
+            transformationToSave.productProperties = productPropertiesToSave;
+            transformationToSave.transformationToApply = transformationToApplyToSave;
+            transformationToSave.inputs = inputs.map(input => new TransformationIO(input.id, input.inventory!.id, input.quantity!));
+            transformationToSave.outputs = outputs.map(output => new TransformationIO(output.id, output.inventory!.id, output.quantity!));
             transformationToSave.save(modelerContext.modeler.current!);
 
             modelerContext.transformations.set(transformationToSave.id, transformationToSave);
@@ -77,9 +85,9 @@ export default function TransformationModal({
 
     function canSave() {
         const allIOGood = [...inputs, ...outputs]
-            .map(input => (input.product != undefined && input.quantity != undefined))
+            .map(input => (input.inventory != undefined && input.quantity != undefined))
             .reduce((a, b) => a && b, true);
-        if (!product || !allIOGood) {
+        if (!productProperties || !allIOGood) {
             return false;
         }
 
@@ -90,12 +98,12 @@ export default function TransformationModal({
         set(prevState => prevState.map(prevIO => prevIO.id === io.id ? {...prevIO, quantity: newQuantity} : prevIO));
     }
 
-    function setIOProduct(io: InputOutput, set: React.Dispatch<React.SetStateAction<InputOutput[]>>) {
-        return (newProduct: Product) => {
+    function setIOInventory(io: InputOutput, set: React.Dispatch<React.SetStateAction<InputOutput[]>>) {
+        return (newInventory: Inventory) => {
             set(prevState => prevState.map(prevIO => prevIO.id === io.id ? {
                 ...prevIO,
-                product: newProduct,
-                id: newProduct.id
+                inventory: newInventory,
+                id: newInventory.id
             } : prevIO));
         };
     }
@@ -103,7 +111,7 @@ export default function TransformationModal({
     function addNewInput() {
         const newInput: InputOutput = {
             id: generateId("TransformationInput"),
-            product: undefined,
+            inventory: undefined,
             quantity: undefined
         }
         setInputs(prevInputs => [...prevInputs, newInput]);
@@ -112,7 +120,7 @@ export default function TransformationModal({
     function addNewOutput() {
         const newOutput: InputOutput = {
             id: generateId("TransformationOutput"),
-            product: undefined,
+            inventory: undefined,
             quantity: undefined,
         }
         setOutputs(prevOutputs => [...prevOutputs, newOutput]);
@@ -132,17 +140,19 @@ export default function TransformationModal({
 
                 <Divider/>
 
-                <InputGroup>
-                    <InputGroup.Addon>Product</InputGroup.Addon>
-                    <ProductPicker product={product!} setProduct={setProduct} whichTypes="final"/>
-                </InputGroup>
+                <Heading>Product properties</Heading>
+                <ProductPropertiesModifier productProperties={productProperties} setProductProperties={setProductProperties}/>
+
+                <Heading>Product transformation</Heading>
+                <ProductPropertiesModifier productProperties={transformationToApply} setProductProperties={setTransformationToApply}/>
+
+                <Divider/>
 
                 <Heading>Inputs</Heading>
                 {inputs.map(input => {
                     return (
                         <InputGroup key={input.id}>
-                            <ProductPicker product={input.product!} setProduct={setIOProduct(input, setInputs)}
-                                           whichTypes="all"/>
+                            <InventoryPicker inventory={input.inventory!} setInventory={setIOInventory(input, setInputs)}/>
                             <InputNumber placeholder="Quantity" value={input.quantity} min={1}
                                          onChange={value => setIOQuantity(input, value as number, setInputs)}/>
                         </InputGroup>
@@ -154,8 +164,7 @@ export default function TransformationModal({
                 {outputs.map(output => {
                     return (
                         <InputGroup key={output.id}>
-                            <ProductPicker product={output.product!} setProduct={setIOProduct(output, setOutputs)}
-                                           whichTypes="all"/>
+                            <InventoryPicker inventory={output.inventory!} setInventory={setIOInventory(output, setInputs)}/>
                             <InputNumber placeholder="Quantity" value={output.quantity} min={1}
                                          onChange={value => setIOQuantity(output, value as number, setOutputs)}/>
                         </InputGroup>

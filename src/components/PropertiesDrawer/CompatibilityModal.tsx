@@ -21,6 +21,7 @@ import {Accessory} from "../../Models/Accessory.ts";
 import AccessoryPicker from "../AccessoryPicker.tsx";
 import AddOutlineIcon from "@rsuite/icons/AddOutline";
 import MinusRoundIcon from '@rsuite/icons/MinusRound';
+import ProductPropertiesModifier from "../ProductPropertiesModifier.tsx";
 
 
 interface CompatibilityModalProps {
@@ -141,18 +142,6 @@ export default function CompatibilityModal({
         setAccessories(prevState => prevState.filter(a => a.id !== accessoryInput.id))
     }
 
-    function addNewProductProperty() {
-        setProductProperties(prevState => [...prevState, ["", ""]]);
-    }
-
-    function updateKeyProductProperty(index: number, newKey: string) {
-        setProductProperties(prevState => prevState.map((item, i) => i === index ? [newKey, item[1]] : item))
-    }
-
-    function updateValueProductProperty(index: number, newValue: string) {
-        setProductProperties(prevState => prevState.map((item, i) => i === index ? [item[0], newValue] : item))
-    }
-
     return (
         <Modal backdrop="static" keyboard={false} open={showModal} onClose={() => closeModal(false)}>
             <Modal.Header>
@@ -172,16 +161,8 @@ export default function CompatibilityModal({
                 <Divider/>
 
                 <Heading>Product properties</Heading>
-                {productProperties.map(([key, value], index) => (
-                    <HStack key={index}>
-                        <InputGroup>
-                            <Input placeholder="Key" value={key} onChange={newKey => updateKeyProductProperty(index, newKey)}/>
-                            <Input placeholder="Value" value={value}
-                                   onChange={newValue => updateValueProductProperty(index, newValue)}/>
-                        </InputGroup>
-                    </HStack>
-                ))}
-                <IconButton icon={<AddOutlineIcon/>} onClick={addNewProductProperty}/>
+                <ProductPropertiesModifier productProperties={productProperties}
+                                           setProductProperties={setProductProperties}/>
 
                 <Divider/>
 
