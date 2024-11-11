@@ -5,9 +5,9 @@ import {Shape} from "bpmn-js/lib/model/Types.ts";
 export default class Inventory extends BaseElement{
     startQuantity: number;
 
-    constructor(shape: Shape | null, startQuantity: number) {
+    constructor(shape: Shape | null) {
         super(shape);
-        this.startQuantity = startQuantity;
+        this.startQuantity = shape?.businessObject.startQuantity ?? 0;
     }
 
     toItemData(): ItemDataType {

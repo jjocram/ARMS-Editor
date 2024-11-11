@@ -52,8 +52,7 @@ function PropertiesDrawer({shape, isOpen, setIsOpen}: PropertiesDrawerProps) {
             } else if (shape.type === "factory:Executor") {
                 setElement(new ExecutorElement(shape, []));
             } else if (shape.type === "factory:Inventory") {
-                console.log(shape);
-                setElement(new Inventory(shape, 0));
+                setElement(modelerRef.inventories.get(shape.id)!);
             } else {
                 setElement(new BaseElement(shape));
             }

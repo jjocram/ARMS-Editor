@@ -23,7 +23,7 @@ export default function InventoryPicker({inventory, setInventory}: InventoryPick
 
     return (
         <InputPicker style={{width: "100%"}}
-                     creatable
+                     // creatable
                      data={[...modelContext.inventories.values()].map(i => i.toItemData())}
                      onCreate={handleInventoryCreation}
                      value={inventory?.id}

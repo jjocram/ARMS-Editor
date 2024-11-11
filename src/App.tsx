@@ -10,9 +10,11 @@ import customModdleExtension from "./customModel/factoryModel.json"
 
 import bpmnExtension from './BPMNExtensions';
 
-// @ts-ignore
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-expect-error
 import lintModule from "bpmn-js-bpmnlint";
-// @ts-ignore
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-expect-error
 import bpmnlintConfig from "./linting/.bpmnlintrc";
 import "./linting/bpmn-js-bpmnlint.css";
 import PropertiesDrawer from "./components/PropertiesDrawer/PropertiesDrawer.tsx";
@@ -23,10 +25,17 @@ import {Accessory} from "./Models/Accessory.ts";
 import {Transformation, TransformationIO} from "./Models/Transformation.ts";
 import {Moddle} from "bpmn-js/lib/model/Types";
 import Compatibility, {AccessoryCompatibility} from "./Models/Compatibility.ts";
+import Inventory from "./Models/Inventory.ts";
+
+interface ElementEvent {
+    element: Shape,
+    stopPropagation: () => void,
+}
 
 function App() {
     const modelerRef = useRef<Modeler | null>(null);
-    const [modelerContext, _] = useState<ModelerContext>(new ModelerContext())
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const [modelerContext, _setModelerContext] = useState<ModelerContext>(new ModelerContext())
     const [isDrawerOpen, setDrawerOpen] = useState(false);
     const [selectedElement, setSelectedElement] = useState<Shape | null>(null);
 
@@ -49,7 +58,9 @@ function App() {
                 ]
             })
             modelerRef.current.on('element.dblclick', 1500, handleSelectionChange);
-            modelerRef.current.on('import.done', setupModelData)
+            modelerRef.current.on('import.done', setupModelData);
+            modelerRef.current.on('element.changed', updateModelerContext);
+            // console.log(modelerRef.current.get("eventBus"));
 
             modelerContext.modeler = modelerRef;
             modelerContext.products = new Map<string, Product>();
@@ -60,10 +71,23 @@ function App() {
         }
     }
 
-    function handleSelectionChange(event: any) {
+    function handleSelectionChange(event: ElementEvent) {
         setSelectedElement(event.element);
         setDrawerOpen(true);
         event.stopPropagation();
+    }
+
+    function updateModelerContext(event: ElementEvent) {
+        const updateActions: Map<string, (element: Shape) => void> = new Map([
+            ["factory:Inventory", (element: Shape) => {
+                modelerContext.inventories.set(element.id, new Inventory(element));
+            }],
+        ])
+        const functionToApply = updateActions.get(event.element.type);
+
+        if (functionToApply) {
+            functionToApply(event.element);
+        }
     }
 
     function setupModelData() {
@@ -71,10 +95,16 @@ function App() {
         const processElement = elementRegistry.find(element => element.type === "bpmn:Process");
         if (processElement) {
             console.log("Model changed... setting up model's data");
+            const inventories = processElement.children
+                .filter((element: Shape) => is(element, "bpmn:Inventory"))
+                .map((element: Shape) => new Inventory(element))
+                .map((inventory: Inventory) => [inventory.id, inventory])
+            modelerContext.inventories = new Map(inventories);
+
             let extensionElementsElement = processElement.businessObject.get("extensionElements")
 
             if (!extensionElementsElement) {
-                extensionElementsElement =( modelerContext.modeler.current!.get("moddle") as Moddle).create("bpmn:ExtensionElements");
+                extensionElementsElement = (modelerContext.modeler.current!.get("moddle") as Moddle).create("bpmn:ExtensionElements");
                 processElement.businessObject.extensionElements = extensionElementsElement;
             }
 
