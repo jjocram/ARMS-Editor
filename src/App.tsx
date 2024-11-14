@@ -120,7 +120,7 @@ function App() {
                 .map((element: Shape) => {
                     const productProperties = new Map<string, string>(element.productProperties?.map((p: Shape) => [p.key, p.value]) ?? []);
                     const transformationToApply = new Map<string, string>(element.transformationToApply?.map((p: Shape) => [p.key, p.value]) ?? []);
-                    new Transformation(element.id, element.activityId, productProperties, transformationToApply)
+                    return new Transformation(element.id, element.activityId, productProperties, transformationToApply)
                 })
                 .map((transformation: Transformation) => [transformation.id, transformation]);
             modelerContext.transformations = new Map(transformations);
