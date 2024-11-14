@@ -109,6 +109,29 @@
       ]
     },
     {
+      "name": "ProductRequest",
+      "superClass": [
+        "Element"
+      ],
+      "properties": [
+        {
+          "name": "id",
+          "isAttr": true,
+          "type": "String"
+        },
+        {
+          "name": "quantity",
+          "isAttr": true,
+          "type": "String"
+        },
+        {
+          "name": "productProperties",
+          "isMany": true,
+          "type": "ProductProperty"
+        }
+      ]
+    },
+    {
       "name": "Transformation",
       "superClass": [
         "Element"
@@ -143,30 +166,6 @@
           "name": "outputs",
           "type": "TransformationOutput",
           "isMany": true
-        }
-
-      ]
-    },
-    {
-      "name": "Product",
-      "superClass": [
-        "Element"
-      ],
-      "properties": [
-        {
-          "name": "id",
-          "isAttr": true,
-          "type": "String"
-        },
-        {
-          "name": "name",
-          "isAttr": true,
-          "type": "String"
-        },
-        {
-          "name": "quantity",
-          "isAttr": true,
-          "type": "String"
         }
       ]
     },

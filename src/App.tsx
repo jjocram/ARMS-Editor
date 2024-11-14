@@ -19,7 +19,6 @@ import bpmnlintConfig from "./linting/.bpmnlintrc";
 import "./linting/bpmn-js-bpmnlint.css";
 import PropertiesDrawer from "./components/PropertiesDrawer/PropertiesDrawer.tsx";
 import {is} from "bpmn-js/lib/util/ModelUtil";
-import Product from "./Models/Product.ts";
 import {ElementRegistry} from "bpmn-js/lib/features/auto-place/BpmnAutoPlaceUtil";
 import {Accessory} from "./Models/Accessory.ts";
 import {Transformation, TransformationIO} from "./Models/Transformation.ts";
@@ -63,11 +62,11 @@ function App() {
             // console.log(modelerRef.current.get("eventBus"));
 
             modelerContext.modeler = modelerRef;
-            modelerContext.products = new Map<string, Product>();
             modelerContext.availableAccessories = new Map<string, Accessory>();
             modelerContext.transformations = new Map<string, Transformation>()
             modelerContext.compatibilities = [];
-            console.log("Modeler initialized")
+            modelerContext.inventories = new Map<string, Inventory>();
+            console.log("Modeler initialized");
         }
     }
 
@@ -109,16 +108,6 @@ function App() {
             }
 
             const extensionElements = extensionElementsElement.get("values");
-
-            const products = extensionElements
-                .filter((element: Shape) => is(element, "factory:Product"))
-                .map((element: Shape) => {
-                    const product = new Product(element.id, element.name)
-                    product.finalQuantity = element.quantity ?? undefined;
-                    return product
-                })
-                .map((product: Product) => [product.id, product]);
-            modelerContext.products = new Map(products);
 
             const availableAccessories = extensionElements
                 .filter((element: Shape) => is(element, "factory:Accessory"))
