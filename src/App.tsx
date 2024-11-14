@@ -25,6 +25,7 @@ import {Transformation, TransformationIO} from "./Models/Transformation.ts";
 import {Moddle} from "bpmn-js/lib/model/Types";
 import Compatibility, {AccessoryCompatibility} from "./Models/Compatibility.ts";
 import Inventory from "./Models/Inventory.ts";
+import ProductRequest from "./Models/ProductRequest.ts";
 
 interface ElementEvent {
     element: Shape,
@@ -66,6 +67,7 @@ function App() {
             modelerContext.transformations = new Map<string, Transformation>()
             modelerContext.compatibilities = [];
             modelerContext.inventories = new Map<string, Inventory>();
+            modelerContext.productRequests = new Map<string, ProductRequest>();
             console.log("Modeler initialized");
         }
     }
@@ -114,6 +116,15 @@ function App() {
                 .map((element: Shape) => new Accessory(element.id, element.name, element.quantity))
                 .map((accessory: Accessory) => [accessory.id, accessory]);
             modelerContext.availableAccessories = new Map(availableAccessories);
+
+            const productRequests = extensionElements
+                .filter((element: Shape) => is(element, "factory:ProductRequest"))
+                .map((element: Shape) => {
+                    const productProperties = new Map<string, string>(element.productProperties?.map((p: Shape) => [p.key, p.value]));
+                    return new ProductRequest(element.id, productProperties, element.quantity);
+                })
+                .map((productRequest: ProductRequest) => [productRequest.id, productRequest]);
+            modelerContext.productRequests = new Map(productRequests);
 
             const transformations = extensionElements
                 .filter((element: Shape) => is(element, "factory:Transformation"))

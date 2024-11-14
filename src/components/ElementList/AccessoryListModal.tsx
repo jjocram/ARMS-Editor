@@ -1,10 +1,10 @@
 import {Button, HStack, IconButton, Input, InputGroup, InputNumber, Modal, Stack} from "rsuite";
-import {useModelerRef} from "../ModelerContext.ts";
+import {useModelerRef} from "../../ModelerContext.ts";
 import {useEffect, useState} from "react";
 import AddOutlineIcon from "@rsuite/icons/AddOutline";
 import TrashIcon from '@rsuite/icons/Trash';
-import {generateId} from "../Utils.ts";
-import {Accessory} from "../Models/Accessory.ts";
+import {generateId} from "../../Utils.ts";
+import {Accessory} from "../../Models/Accessory.ts";
 
 interface AccessoryListModalProps {
     show: boolean;
@@ -36,7 +36,7 @@ export default function AccessoryListModal({show, setShow}: AccessoryListModalPr
     }, [show])
 
     function close() {
-        const updatedAccessories = accessoryInputs.map(accessory => new Accessory(accessory.id, accessory.name!, accessory.quantity!));
+        const updatedAccessories = accessoryInputs.map(accessory => new Accessory(accessory.id, accessory.name!, accessory.quantity ?? 0));
 
         updatedAccessories.forEach(accessory => accessory.save(modelContext.modeler.current!));
         modelContext.availableAccessories = new Map(updatedAccessories.map(a => [a.id, a]));

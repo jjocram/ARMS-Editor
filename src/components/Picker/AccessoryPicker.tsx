@@ -1,7 +1,7 @@
 import {InputPicker} from "rsuite";
-import {useModelerRef} from "../ModelerContext.ts";
-import {Accessory} from "../Models/Accessory.ts";
-import {generateId} from "../Utils.ts";
+import {useModelerRef} from "../../ModelerContext.ts";
+import {Accessory} from "../../Models/Accessory.ts";
+import {generateId} from "../../Utils.ts";
 
 interface AccessoryPickerProps {
     accessory: Accessory;

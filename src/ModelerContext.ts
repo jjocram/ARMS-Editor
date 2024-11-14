@@ -4,6 +4,7 @@ import {Accessory} from "./Models/Accessory.ts";
 import {Transformation} from "./Models/Transformation.ts";
 import Compatibility from "./Models/Compatibility.ts";
 import Inventory from "./Models/Inventory.ts";
+import ProductRequest from "./Models/ProductRequest.ts";
 
 
 export class ModelerContext {
@@ -12,6 +13,7 @@ export class ModelerContext {
     availableAccessories!: Map<string, Accessory>
     transformations!: Map<string, Transformation>
     compatibilities!: Array<Compatibility>
+    productRequests!: Map<string, ProductRequest>
 }
 
 export const ModelerRefContext = createContext<ModelerContext>(new ModelerContext())

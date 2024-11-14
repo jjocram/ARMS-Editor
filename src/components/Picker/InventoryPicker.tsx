@@ -1,5 +1,5 @@
-import {useModelerRef} from "../ModelerContext.ts";
-import Inventory from "../Models/Inventory.ts";
+import {useModelerRef} from "../../ModelerContext.ts";
+import Inventory from "../../Models/Inventory.ts";
 import {InputPicker} from "rsuite";
 
 interface InventoryPickerProps {

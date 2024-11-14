@@ -1,6 +1,6 @@
-import {useModelerRef} from "../ModelerContext.ts";
+import {useModelerRef} from "../../ModelerContext.ts";
 import {useEffect, useState} from "react";
-import {generateId} from "../Utils.ts";
+import {generateId} from "../../Utils.ts";
 import {IconButton, Input, InputGroup, InputNumber, Modal, Stack} from "rsuite";
 import AddOutlineIcon from "@rsuite/icons/AddOutline";
 

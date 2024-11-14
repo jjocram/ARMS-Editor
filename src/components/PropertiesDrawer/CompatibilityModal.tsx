@@ -18,7 +18,7 @@ import {useModelerRef} from "../../ModelerContext.ts";
 import Compatibility, {AcceptedTimeUnit, AccessoryCompatibility} from "../../Models/Compatibility.ts";
 import {generateId} from "../../Utils.ts";
 import {Accessory} from "../../Models/Accessory.ts";
-import AccessoryPicker from "../AccessoryPicker.tsx";
+import AccessoryPicker from "../Picker/AccessoryPicker.tsx";
 import AddOutlineIcon from "@rsuite/icons/AddOutline";
 import MinusRoundIcon from '@rsuite/icons/MinusRound';
 import ProductPropertiesModifier from "../ProductPropertiesModifier.tsx";

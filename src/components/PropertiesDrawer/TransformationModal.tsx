@@ -6,7 +6,7 @@ import AddOutlineIcon from '@rsuite/icons/AddOutline';
 import {Transformation, TransformationIO} from "../../Models/Transformation.ts";
 import {useModelerRef} from "../../ModelerContext.ts";
 import Inventory from "../../Models/Inventory.ts";
-import InventoryPicker from "../InventoryPicker.tsx";
+import InventoryPicker from "../Picker/InventoryPicker.tsx";
 import ProductPropertiesModifier from "../ProductPropertiesModifier.tsx";
 
 interface TransformationModalProps {
