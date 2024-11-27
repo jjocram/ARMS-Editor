@@ -17,3 +17,21 @@
   -ms-user-select: none;
   user-select: none;
 }
+
+/* Colore verde per utilizzo basso */
+.bpmn-element-green polygon {
+  fill: green !important;  
+  fill-opacity: 0.3 !important;
+}
+
+/* Colore giallo per utilizzo medio */
+.bpmn-element-yellow polygon {
+  fill: yellow !important;  
+  fill-opacity: 0.3 !important;
+}
+
+/* Colore rosso per utilizzo alto */
+.bpmn-element-red polygon {
+  fill: red !important;  
+  fill-opacity: 0.3 !important;
+}

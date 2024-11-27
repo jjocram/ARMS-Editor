@@ -7,10 +7,11 @@ import InventoryListModal from "../ElementList/InventoryListModal.tsx";
 import ProductRequestListModal from "../ElementList/ProductRequestListModal.tsx";
 
 interface MenuBarProps {
-    setXmlDiagramToEmpty: () => void
+    setXmlDiagramToEmpty: () => void;
+    setSelectedMetric: React.Dispatch<React.SetStateAction<'busy' | 'idle'>>; 
 }
 
-export default function MenuBar({setXmlDiagramToEmpty} : MenuBarProps) {
+export default function MenuBar({setXmlDiagramToEmpty, setSelectedMetric} : MenuBarProps) {
     const modelerRef = useModelerRef();
 
     const [showInventoriesModal, setShowInventoriesModal] = useState(false);
@@ -50,6 +51,10 @@ export default function MenuBar({setXmlDiagramToEmpty} : MenuBarProps) {
         reader.readAsText(file);
     }
 
+    const handleSelectMetric = (metric: 'busy' | 'idle') => {
+        setSelectedMetric(metric);  
+    };
+
     return (
         <>
             <ButtonToolbar>
@@ -70,11 +75,16 @@ export default function MenuBar({setXmlDiagramToEmpty} : MenuBarProps) {
                     <DropdownItem onSelect={() => setShowAccessoryModal(true)}>Accessories</DropdownItem>
                     <DropdownItem onSelect={() => setShowProductRequestModal(true)}>Product requests</DropdownItem>
                 </Dropdown>
+                <Dropdown title="Metrics">
+                    <DropdownItem onSelect={() => handleSelectMetric('busy')}>Busy</DropdownItem>
+                    <DropdownItem onSelect={() => handleSelectMetric('idle')}>Idle</DropdownItem>
+                </Dropdown>
             </ButtonToolbar>
 
             <InventoryListModal show={showInventoriesModal} setShow={setShowInventoriesModal}/>
             <AccessoryListModal show={showAccessoryModal} setShow={setShowAccessoryModal}/>
             <ProductRequestListModal show={showProductRequestModal} setShow={setShowProductRequestModal}/>
+            
         </>
     )
 }

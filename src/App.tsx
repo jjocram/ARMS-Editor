@@ -23,9 +23,9 @@ import {ElementRegistry} from "bpmn-js/lib/features/auto-place/BpmnAutoPlaceUtil
 import {Accessory} from "./Models/Accessory.ts";
 import {Transformation, TransformationIO} from "./Models/Transformation.ts";
 import {Moddle} from "bpmn-js/lib/model/Types";
-import Compatibility, {AccessoryCompatibility} from "./Models/Compatibility.ts";
-import Inventory from "./Models/Inventory.ts";
-import ProductRequest from "./Models/ProductRequest.ts";
+import Compatibility, {AccessoryCompatibility} from './Models/Compatibility.ts';
+import Inventory from './Models/Inventory.ts';
+import ProductRequest from './Models/ProductRequest.ts';
 
 interface ElementEvent {
     element: Shape,
@@ -35,9 +35,13 @@ interface ElementEvent {
 function App() {
     const modelerRef = useRef<Modeler | null>(null);
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const [modelerContext, _setModelerContext] = useState<ModelerContext>(new ModelerContext())
+    const [modelerContext, _setModelerContext] = useState<ModelerContext>(new ModelerContext());
     const [isDrawerOpen, setDrawerOpen] = useState(false);
     const [selectedElement, setSelectedElement] = useState<Shape | null>(null);
+    
+    const [jsonData, setJsonData] = useState<any | null>(null); // Dati JSON caricati
+
+    const [selectedMetric, setSelectedMetric] = useState<'busy' | 'idle'>('busy');  // Stato per tenere traccia della selezione
 
     function initializeModeler() {
         const container = document.getElementById('diagramContainer') as HTMLElement;
@@ -72,11 +76,11 @@ function App() {
         }
     }
 
-    function handleSelectionChange(event: ElementEvent) {
+    const handleSelectionChange = (event: any) => {
         setSelectedElement(event.element);
         setDrawerOpen(true);
         event.stopPropagation();
-    }
+    };
 
     function updateModelerContext(event: ElementEvent) {
         const updateActions: Map<string, (element: Shape) => void> = new Map([
@@ -178,6 +182,85 @@ function App() {
             .catch(err => console.error(err));
     }
 
+    // Caricamento del file JSON
+    const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+        try {
+            const data = JSON.parse(e.target?.result as string);
+            console.log("JSON caricato:", data);
+            setJsonData(data); 
+        } catch (error) {
+            console.error("Errore durante la lettura del JSON:", error);
+            alert("Il file selezionato non è un JSON valido.");
+        }
+        };
+        reader.readAsText(file);
+    };
+
+    interface Executor {
+        id: string;
+        maxQueueLength: number;
+        busy: number;
+        idle: number;
+    }
+
+    const startSimulation = () => {
+        if (jsonData) {
+            console.log("Simulazione avviata con dati:", jsonData);
+
+            const executors: Executor[] = jsonData.executors;  // Usa il tipo Executor
+
+            // Calcolare la percentuale di utilizzo in base alla selezione
+            executors.forEach((executor: Executor) => {  // Usa il tipo Executor anche qui
+                let percentage;
+                if (selectedMetric === 'busy') {
+                    percentage = (executor.busy / jsonData.simulation.totalTime) * 100;  // Calcola la percentuale di busy
+                } else {
+                    percentage = (executor.idle / jsonData.simulation.totalTime) * 100;  // Calcola la percentuale di idle
+                }
+
+                const colorClass = getColorClass(percentage);  // Ottieni il colore in base alla percentuale
+                changeElementClass(executor.id, colorClass);  // Applica la classe CSS per cambiare il colore
+            });
+        } else {
+            alert("Carica un file JSON prima di avviare la simulazione.");
+        }
+    };
+
+    const getColorClass = (busyPercentage: number) => {
+        if (busyPercentage <= 33) {
+        return 'bpmn-element-green';  
+        } else if (busyPercentage <= 66) {
+        return 'bpmn-element-yellow';  
+        } else {
+        return 'bpmn-element-red';  
+        }
+    };
+    
+    // Funzione per cambiare la classe CSS di un elemento nel diagramma utilizzando l'ID
+    const changeElementClass = (elementId: string, colorClass: string) => {
+        const elementRegistry = modelerRef.current?.get("elementRegistry");
+        const element = elementRegistry?.get(elementId);
+
+        if (element) {
+            const gfx = modelerRef.current?.get("canvas").getGraphics(element);
+
+            if (gfx) {
+                // Rimuovi qualsiasi classe precedente
+                gfx.classList.remove('bpmn-element-green', 'bpmn-element-yellow', 'bpmn-element-red');
+                
+                // Aggiungi la classe CSS appropriata
+                gfx.classList.add(colorClass);
+            }
+        } else {
+            console.error("Elemento non trovato nel elementRegistry per ID:", elementId);
+        }
+    };
+
     useEffect(() => {
         initializeModeler();
         setXmlDiagramToEmpty();
@@ -185,13 +268,17 @@ function App() {
 
     return (
         <div className="App">
-            <ModelerRefContext.Provider value={modelerContext}>
-                <MenuBar setXmlDiagramToEmpty={setXmlDiagramToEmpty}></MenuBar>
-                <div id="diagramContainer" className="diagramContainer"></div>
-                <PropertiesDrawer shape={selectedElement} isOpen={isDrawerOpen} setIsOpen={setDrawerOpen}/>
-            </ModelerRefContext.Provider>
+        <ModelerRefContext.Provider value={modelerContext}>
+            <MenuBar setXmlDiagramToEmpty={() => {}} setSelectedMetric={setSelectedMetric} />
+            <div className="simulationControls">
+                <input type="file" accept=".json" onChange={handleFileChange} className="fileInput"/>
+                <button onClick={startSimulation} className="startSimulationButton">Avvia Simulazione</button>
+            </div>
+            <div id="diagramContainer" className="diagramContainer"></div>
+            <PropertiesDrawer shape={selectedElement} isOpen={isDrawerOpen} setIsOpen={setDrawerOpen} />
+        </ModelerRefContext.Provider>
         </div>
-    )
-}
+    );
+    }
 
-export default App
+    export default App;
