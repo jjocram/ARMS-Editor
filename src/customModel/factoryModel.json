@@ -50,7 +50,7 @@
       "properties": []
     },
     {
-      "name": "TransformationInput",
+      "name": "TransformationIO",
       "superClass": [
         "Element"
       ],
@@ -73,26 +73,15 @@
       ]
     },
     {
+      "name": "TransformationInput",
+      "superClass": [
+        "TransformationIO"
+      ]
+    },
+    {
       "name": "TransformationOutput",
       "superClass": [
-        "Element"
-      ],
-      "properties": [
-        {
-          "name": "id",
-          "isAttr": true,
-          "type": "String"
-        },
-        {
-          "name": "inventoryId",
-          "isAttr": true,
-          "type": "String"
-        },
-        {
-          "name": "quantity",
-          "isAttr": true,
-          "type": "Integer"
-        }
+        "TransformationIO"
       ]
     },
     {
@@ -186,32 +175,14 @@
     },
     {
       "name": "TransformationProductProperty",
-      "properties": [
-        {
-          "name": "key",
-          "isAttr": true,
-          "type": "String"
-        },
-        {
-          "name": "value",
-          "isAttr": true,
-          "type": "String"
-        }
+      "superClass": [
+        "ProductProperty"
       ]
     },
     {
       "name": "TransformationProductPropertyToApply",
-      "properties": [
-        {
-          "name": "key",
-          "isAttr": true,
-          "type": "String"
-        },
-        {
-          "name": "value",
-          "isAttr": true,
-          "type": "String"
-        }
+      "superClass": [
+        "ProductProperty"
       ]
     },
     {
