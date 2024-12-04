@@ -27,6 +27,8 @@ import Compatibility, {AccessoryCompatibility} from './Models/Compatibility.ts';
 import Inventory from './Models/Inventory.ts';
 import ProductRequest from './Models/ProductRequest.ts';
 
+import D3Chart from './components/ElementList/ChartComponent.tsx';
+
 interface ElementEvent {
     element: Shape,
     stopPropagation: () => void,
@@ -39,9 +41,9 @@ function App() {
     const [isDrawerOpen, setDrawerOpen] = useState(false);
     const [selectedElement, setSelectedElement] = useState<Shape | null>(null);
     
-    const [jsonData, setJsonData] = useState<any | null>(null); // Dati JSON caricati
+    const [jsonData, setJsonData] = useState<any | null>(null); 
 
-    const [selectedMetric, setSelectedMetric] = useState<'busy' | 'idle'>('busy');  // Stato per tenere traccia della selezione
+    const [selectedMetric, setSelectedMetric] = useState<'busy' | 'idle'>('busy');  
 
     function initializeModeler() {
         const container = document.getElementById('diagramContainer') as HTMLElement;
@@ -74,6 +76,24 @@ function App() {
             modelerContext.productRequests = new Map<string, ProductRequest>();
             console.log("Modeler initialized");
         }
+    }
+
+    //PER DIAGRAMMA 
+    const getExecutorsData = () => {
+        if (!jsonData) return [];
+    
+        return jsonData.executors.map((executor: Executor) => ({
+            id: executor.id,
+            busy: executor.busy,
+            idle: executor.idle,
+        }));
+    };    
+
+    interface Executor {
+        id: string;
+        maxQueueLength: number;
+        busy: number;
+        idle: number;
     }
 
     const handleSelectionChange = (event: any) => {
@@ -201,14 +221,7 @@ function App() {
         reader.readAsText(file);
     };
 
-    interface Executor {
-        id: string;
-        maxQueueLength: number;
-        busy: number;
-        idle: number;
-    }
-
-    const startSimulation = () => {
+    /*const startSimulation = () => {
         if (jsonData) {
             console.log("Simulazione avviata con dati:", jsonData);
 
@@ -226,6 +239,47 @@ function App() {
                 const colorClass = getColorClass(percentage);  // Ottieni il colore in base alla percentuale
                 changeElementClass(executor.id, colorClass);  // Applica la classe CSS per cambiare il colore
             });
+        } else {
+            alert("Carica un file JSON prima di avviare la simulazione.");
+        }
+    };*/
+
+    const [simulationPercentages, setSimulationPercentages] = useState<Map<string, { busy: number, idle: number }>>(new Map());
+    const [simulationStarted, setSimulationStarted] = useState(false);
+
+    // Funzione di avvio della simulazione
+    const startSimulation = () => {
+        if (jsonData) {
+            console.log("Simulazione avviata con dati:", jsonData);
+
+            const executors: Executor[] = jsonData.executors;  
+
+            const updatedPercentages: Map<string, { busy: number, idle: number }> = new Map();  
+
+            executors.forEach((executor: Executor) => {  
+                let percentage;
+                let busyPercentage: number;
+                let idlePercentage: number;
+
+                // Calcola le percentuali di busy o idle 
+                busyPercentage = (executor.busy / jsonData.simulation.totalTime) * 100;  
+                idlePercentage = ((executor.idle) / jsonData.simulation.totalTime) * 100;  
+               
+                updatedPercentages.set(executor.id, { busy: busyPercentage, idle: idlePercentage });
+
+                if (selectedMetric === 'busy') {
+                    percentage= busyPercentage 
+                }else{
+                    percentage = idlePercentage;
+                }
+                const colorClass = getColorClass(percentage);  
+                changeElementClass(executor.id, colorClass);
+            });
+
+            // Aggiorna lo stato con le nuove percentuali
+            setSimulationPercentages(updatedPercentages);
+            setSimulationStarted(true); 
+
         } else {
             alert("Carica un file JSON prima di avviare la simulazione.");
         }
@@ -275,7 +329,8 @@ function App() {
                 <button onClick={startSimulation} className="startSimulationButton">Avvia Simulazione</button>
             </div>
             <div id="diagramContainer" className="diagramContainer"></div>
-            <PropertiesDrawer shape={selectedElement} isOpen={isDrawerOpen} setIsOpen={setDrawerOpen} />
+            <PropertiesDrawer shape={selectedElement} isOpen={isDrawerOpen} setIsOpen={setDrawerOpen} simulationPercentages={simulationPercentages} />
+            {simulationStarted && jsonData && <D3Chart data={getExecutorsData()} selectedMetric={selectedMetric} />}
         </ModelerRefContext.Provider>
         </div>
     );

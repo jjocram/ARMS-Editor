@@ -32,9 +32,10 @@ interface PropertiesDrawerProps {
     shape: Shape | null,
     isOpen: boolean,
     setIsOpen: (isOpen: boolean) => void,
+    simulationPercentages: Map<string, { busy: number, idle: number }>;
 }
 
-function PropertiesDrawer({shape, isOpen, setIsOpen}: PropertiesDrawerProps) {
+function PropertiesDrawer({shape, isOpen, setIsOpen, simulationPercentages}: PropertiesDrawerProps) {
     const [element, setElement] = useState<BaseElement>(new BaseElement(null));
     const modelerRef = useModelerRef();
 
@@ -44,6 +45,8 @@ function PropertiesDrawer({shape, isOpen, setIsOpen}: PropertiesDrawerProps) {
 
     const [showTransformationModal, setShowTransformationModal] = useState<boolean>(false);
     const [selectedTransformation, setSelectedTransformation] = useState<Transformation | undefined>(undefined);
+
+    const executorSimulationData = shape && simulationPercentages.get(shape.id);
 
     useEffect(() => {
         if (shape !== null) {
@@ -206,6 +209,8 @@ function PropertiesDrawer({shape, isOpen, setIsOpen}: PropertiesDrawerProps) {
         }
     }
 
+
+
     function renderBaseInfo() {
         return (
             <>
@@ -266,6 +271,27 @@ function PropertiesDrawer({shape, isOpen, setIsOpen}: PropertiesDrawerProps) {
         )
     }
 
+    function renderSimulationInfo() {
+        if (executorSimulationData) {
+            return (
+                <Accordion.Panel header="Simulation Info">
+                    <Stack spacing={10} direction="column" alignItems="flex-start">
+                        <InputGroup>
+                            <InputGroup.Addon>Busy Time</InputGroup.Addon>
+                            <InputNumber value={executorSimulationData.busy} readOnly />
+                        </InputGroup>
+                        <InputGroup>
+                            <InputGroup.Addon>Idle Time</InputGroup.Addon>
+                            <InputNumber value={executorSimulationData.idle} readOnly />
+                        </InputGroup>
+                    </Stack>
+                </Accordion.Panel>
+            );
+        } else {
+            return null; 
+        }
+    }
+
     return (
         <Drawer enforceFocus={false} open={isOpen} onClose={handleSaveElement}>
             <Drawer.Header>
@@ -277,6 +303,7 @@ function PropertiesDrawer({shape, isOpen, setIsOpen}: PropertiesDrawerProps) {
                     {renderAdditionalInfo()}
                     {renderCompatibilities()}
                     {renderTransformations()}
+                    {renderSimulationInfo()}
                 </Accordion>
             </Drawer.Body>
         </Drawer>
