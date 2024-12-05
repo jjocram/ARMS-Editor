@@ -35,3 +35,21 @@
   fill: red !important;  
   fill-opacity: 0.3 !important;
 }
+
+
+.layoutContainer {
+  display: flex;
+  height: calc(100vh - 60px); 
+  flex-direction: row; 
+}
+
+.diagramContainer {
+  flex-grow: 1; 
+  overflow: auto; 
+}
+.sidePanel {
+  width: 40%; 
+  border-left: 1px solid #ccc; 
+  height: 100%; 
+  overflow: auto; 
+}

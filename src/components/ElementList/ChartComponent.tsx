@@ -2,77 +2,65 @@ import React, { useEffect } from 'react';
 import * as d3 from 'd3';
 
 interface D3ChartProps {
-  data: { id: string; busy: number; idle: number }[];
-  selectedMetric: 'busy' | 'idle';
+  idealTime: number;
+  realTime: number;
+  title: string; 
 }
 
-const D3Chart: React.FC<D3ChartProps> = ({ data, selectedMetric }) => {
-  useEffect(() => {
-    d3.select('#d3chart').html('');  // Pulisce il contenuto precedente
+const D3Chart: React.FC<D3ChartProps> = ({ idealTime, realTime, title }) => {
+    useEffect(() => {
+        d3.select('#d3chart').html('');
 
-    const margin = { top: 20, right: 30, bottom: 40, left: 200 };
-    const width = 1000 - margin.left - margin.right;
-    const height = 400 - margin.top - margin.bottom;
+        const margin = { top: 30, right: 10, bottom: 30, left: 10 }; // Aumentato top per spazio titolo
+        const width = 350;
+        const height = 100;
 
-    const svg = d3
-      .select('#d3chart')
-      .append('svg')
-      .attr('width', width + margin.left + margin.right)
-      .attr('height', height + margin.top + margin.bottom)
-      .append('g')
-      .attr('transform', `translate(${margin.left},${margin.top})`);
+        const svg = d3.select('#d3chart')
+        .append('svg')
+        .attr('width', width + margin.left + margin.right)
+        .attr('height', height + margin.top + margin.bottom)
+        .append('g')
+        .attr('transform', `translate(${margin.left},${margin.top})`);
 
-    // Scala per l'asse X (valore busy o idle)
-    const x = d3
-      .scaleLinear()
-      .domain([0, d3.max(data, d => (selectedMetric === 'busy' ? d.busy : d.idle)) ?? 0]) // Fallback a 0 se undefined
-      .nice()
-      .range([0, width]);
+        // Aggiunta del titolo
+        svg.append('text')
+        .attr('x', width / 2)
+        .attr('y', -10) // Posizione sopra l'asse X, all'interno del margine superiore
+        .attr('text-anchor', 'middle') // Centra il testo rispetto alle coordinate x
+        .style('font-size', '16px')
+        .style('font-weight', 'bold')
+        .text(title);
 
-    // Scala per l'asse Y (nomi degli esecutori)
-    const y = d3.scaleBand().domain(data.map(d => d.id)).range([0, height]).padding(0.1);
+        const x = d3.scaleLinear()
+        .domain([0, Math.max(idealTime, realTime)])
+        .range([0, width * 0.6]);
 
-    // Aggiungi le barre orizzontali
-    svg
-      .selectAll('.bar')
-      .data(data)
-      .enter()
-      .append('rect')
-      .attr('class', 'bar')
-      .attr('x', 0)
-      .attr('y', d => y(d.id)!)
-      .attr('width', d => x(selectedMetric === 'busy' ? d.busy : d.idle))
-      .attr('height', y.bandwidth())
-      .attr('fill', 'steelblue');
+        const times = [
+        { label: 'Tempo Ideale', time: idealTime },
+        { label: 'Tempo Reale', time: realTime }
+        ];
 
-    // Aggiungi le etichette con le percentuali sopra le barre
-    svg
-      .selectAll('.label')
-      .data(data)
-      .enter()
-      .append('text')
-      .attr('x', d => x(selectedMetric === 'busy' ? d.busy : d.idle) + 5)  
-      .attr('y', d => y(d.id)! + y.bandwidth() / 2)
-      .attr('dy', '0.35em')
-      .attr('fill', 'black')
-      .attr('font-size', '12px')
-      .text(d => {
-        // Calcolare la percentuale
-        const metricValue = selectedMetric === 'busy' ? d.busy : d.idle;
-        const totalTime = 252000;  // valore di totalTime 
-        return `${((metricValue / totalTime) * 100).toFixed(1)}%`;
-      });
+        svg.selectAll('.bar')
+        .data(times)
+        .enter()
+        .append('rect')
+        .attr('class', 'bar')
+        .attr('x', 0)
+        .attr('y', (d, i) => i * 30 + 20) // Aggiusta la posizione delle barre per il titolo
+        .attr('width', d => x(d.time))
+        .attr('height', 25)
+        .attr('fill', (d, i) => i % 2 ? 'steelblue' : 'green');
 
-    // Aggiungi l'asse X
-    svg
-      .append('g')
-      .attr('transform', `translate(0,${height})`)
-      .call(d3.axisBottom(x));
-
-    // Aggiungi l'asse Y
-    svg.append('g').call(d3.axisLeft(y));
-
-  }, [data, selectedMetric]);
+        svg.selectAll('.label')
+        .data(times)
+        .enter()
+        .append('text')
+        .attr('x', d => x(d.time) + 3)
+        .attr('y', (d, i) => i * 30 + 35) // Aggiusta la posizione delle label per il titolo
+        .attr('dy', '.35em')
+        .attr('fill', 'black')
+        .text(d => `${d.label}: ${d.time}`);
+    }, [idealTime, realTime, title]);
 
   return <div id="d3chart"></div>;
 };

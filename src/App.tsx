@@ -28,6 +28,8 @@ import Inventory from './Models/Inventory.ts';
 import ProductRequest from './Models/ProductRequest.ts';
 
 import D3Chart from './components/ElementList/ChartComponent.tsx';
+import PieChart from './components/ElementList/PieChart.tsx';
+import BarChart from './components/ElementList/BarChart.tsx';
 
 interface ElementEvent {
     element: Shape,
@@ -44,6 +46,8 @@ function App() {
     const [jsonData, setJsonData] = useState<any | null>(null); 
 
     const [selectedMetric, setSelectedMetric] = useState<'busy' | 'idle'>('busy');  
+
+    const [activeChart, setActiveChart] = useState<'pie' | 'd3'>('d3');
 
     function initializeModeler() {
         const container = document.getElementById('diagramContainer') as HTMLElement;
@@ -63,6 +67,7 @@ function App() {
                     lintModule
                 ]
             })
+
             modelerRef.current.on('element.dblclick', 1500, handleSelectionChange);
             modelerRef.current.on('import.done', setupModelData);
             modelerRef.current.on('element.changed', updateModelerContext);
@@ -79,7 +84,7 @@ function App() {
     }
 
     //PER DIAGRAMMA 
-    const getExecutorsData = () => {
+    /*const getExecutorsData = () => {
         if (!jsonData) return [];
     
         return jsonData.executors.map((executor: Executor) => ({
@@ -87,13 +92,18 @@ function App() {
             busy: executor.busy,
             idle: executor.idle,
         }));
-    };    
+    };    */
 
+    interface Activity {
+        id: string;
+        busy: number;
+    }
+    
     interface Executor {
         id: string;
         maxQueueLength: number;
-        busy: number;
         idle: number;
+        activities: Activity[];
     }
 
     const handleSelectionChange = (event: any) => {
@@ -212,7 +222,7 @@ function App() {
         try {
             const data = JSON.parse(e.target?.result as string);
             console.log("JSON caricato:", data);
-            setJsonData(data); 
+            setJsonData(data);
         } catch (error) {
             console.error("Errore durante la lettura del JSON:", error);
             alert("Il file selezionato non è un JSON valido.");
@@ -221,31 +231,14 @@ function App() {
         reader.readAsText(file);
     };
 
-    /*const startSimulation = () => {
-        if (jsonData) {
-            console.log("Simulazione avviata con dati:", jsonData);
-
-            const executors: Executor[] = jsonData.executors;  // Usa il tipo Executor
-
-            // Calcolare la percentuale di utilizzo in base alla selezione
-            executors.forEach((executor: Executor) => {  // Usa il tipo Executor anche qui
-                let percentage;
-                if (selectedMetric === 'busy') {
-                    percentage = (executor.busy / jsonData.simulation.totalTime) * 100;  // Calcola la percentuale di busy
-                } else {
-                    percentage = (executor.idle / jsonData.simulation.totalTime) * 100;  // Calcola la percentuale di idle
-                }
-
-                const colorClass = getColorClass(percentage);  // Ottieni il colore in base alla percentuale
-                changeElementClass(executor.id, colorClass);  // Applica la classe CSS per cambiare il colore
-            });
-        } else {
-            alert("Carica un file JSON prima di avviare la simulazione.");
-        }
-    };*/
-
     const [simulationPercentages, setSimulationPercentages] = useState<Map<string, { busy: number, idle: number }>>(new Map());
     const [simulationStarted, setSimulationStarted] = useState(false);
+
+    const calculateBusyPercentageForExecutor = (executor: Executor, totalTime: number): number => {
+        const totalBusyTime = executor.activities.reduce((total, activity) => total + activity.busy, 0);
+        return (totalBusyTime / totalTime) * 100;
+    };
+    
 
     // Funzione di avvio della simulazione
     const startSimulation = () => {
@@ -262,7 +255,7 @@ function App() {
                 let idlePercentage: number;
 
                 // Calcola le percentuali di busy o idle 
-                busyPercentage = (executor.busy / jsonData.simulation.totalTime) * 100;  
+                busyPercentage = calculateBusyPercentageForExecutor(executor, jsonData.simulation.totalTime);
                 idlePercentage = ((executor.idle) / jsonData.simulation.totalTime) * 100;  
                
                 updatedPercentages.set(executor.id, { busy: busyPercentage, idle: idlePercentage });
@@ -278,7 +271,9 @@ function App() {
 
             // Aggiorna lo stato con le nuove percentuali
             setSimulationPercentages(updatedPercentages);
-            setSimulationStarted(true); 
+            setRealTime(jsonData.simulation.totalTime);
+            setIdealTime(calculateIdealTime(jsonData.executors));
+            setSimulationStarted(true);   
 
         } else {
             alert("Carica un file JSON prima di avviare la simulazione.");
@@ -315,10 +310,151 @@ function App() {
         }
     };
 
+    //Grafico generale dei tempi
+    const [idealTime, setIdealTime] = useState(0);
+    const [realTime, setRealTime] = useState(0);
+
+    const calculateIdealTime = (executors: Executor[]): number => {
+        if (!modelerContext.compatibilities) {
+            console.error("Compatibilities data is missing.");
+            return 0;
+        }
+    
+        // Mappa per la conversione dei formati di tempo in minuti
+        const timeUnitToMinutes = {
+            s: 1 / 60, // Secondi in minuti
+            m: 1, // Minuti
+            h: 60, // Ore in minuti
+            d: 1440, // Giorni in minuti
+        };
+    
+        return executors.reduce((total, executor) => {
+            const executorTotal = executor.activities.reduce((sum, activity) => {
+                // Trova la compatibilità corrispondente all'attività e all'esecutore
+                const compatibility = modelerContext.compatibilities.find(
+                    (comp: Compatibility) =>
+                        comp.idActivity === activity.id && comp.idExecutor === executor.id
+                );
+    
+                // Conversione del tempo ideale in minuti
+                const idealTime =
+                    compatibility && timeUnitToMinutes[compatibility.timeUnit]
+                        ? Number(compatibility.time) * timeUnitToMinutes[compatibility.timeUnit]
+                        : 0;
+    
+                return sum + idealTime;
+            }, 0);
+    
+            return total + executorTotal;
+        }, 0);
+    };
+    
+    const [selectedExecutor, setSelectedExecutor] = useState<Executor | null>(null);
+    
+    interface BPMNEventBus {
+        on: (event: string, callback: (event: any) => void) => void;
+        off: (event: string, callback: (event: any) => void) => void;
+    }
+
+    useEffect(() => {
+        if (!simulationStarted || !jsonData || !modelerRef.current) {
+            console.log("Simulation not started or data not available.");
+            return;
+        }
+    
+        console.log("Adding event listener for clicks, simulation is started:", simulationStarted);
+    
+        // Recupera elementRegistry e eventBus dal modeler
+        const elementRegistry = modelerRef.current.get("elementRegistry");
+        const eventBus = modelerRef.current.get("eventBus") as BPMNEventBus;;
+    
+        if (!elementRegistry || !eventBus) {
+            console.error("ElementRegistry or EventBus not found in modeler.");
+            return;
+        }
+    
+        // Gestore per clic sugli elementi
+        const handleElementClick = (event: any) => {
+            const element = event.element;
+    
+            if (!element || !element.id) {
+                console.log("No element found in the event or element lacks an ID.");
+                setActiveChart('d3');
+                setSelectedExecutor(null);
+                return;
+
+            }
+    
+            console.log("Element ID extracted from event:", element.id);
+    
+            // Usa l'id dell'elemento per trovare l'esecutore nel JSON
+            const executor = jsonData.executors.find((exec: Executor) => exec.id === element.id);
+    
+            if (executor) {
+                console.log("Executor matched:", executor.id);
+                setSelectedExecutor(executor);
+                setActiveChart('pie');
+            } else {
+                console.log("No executor matched the ID in JSON data.");
+                setActiveChart('d3');
+                setSelectedExecutor(null);
+            }
+        };
+    
+        // Ascolta gli eventi di clic sugli elementi BPMN
+        eventBus.on("element.click", handleElementClick);
+    
+        return () => {
+            console.log("Removing BPMN.js click event listener.");
+            eventBus.off("element.click", handleElementClick);
+        };
+    }, [simulationStarted, jsonData, modelerRef]);
+
+    useEffect(() => {
+        console.log("jsonData attuale:", jsonData);
+    }, [jsonData]);
+          
     useEffect(() => {
         initializeModeler();
         setXmlDiagramToEmpty();
     }, []);
+
+    // Funzione per ottenere i dati combinati per una singola attività
+    const getBarChartDataForActivity = (activity: any) => {
+        if (!selectedExecutor || !modelerContext.compatibilities) {
+            return null;
+        }
+    
+        // Mappa per la conversione dei formati di tempo in minuti
+        const timeUnitToMinutes = {
+            s: 1 / 60, // Secondi in minuti
+            m: 1, // Minuti
+            h: 60, // Ore in minuti
+            d: 1440, // Giorni in minuti
+        };
+    
+        // Trova la compatibilità corrispondente
+        const compatibility = modelerContext.compatibilities.find(
+            (comp: Compatibility) =>
+                comp.idActivity === activity.id && comp.idExecutor === selectedExecutor.id
+        );
+    
+        // Conversione del tempo ideale in minuti
+        const idealTime =
+            compatibility && timeUnitToMinutes[compatibility.timeUnit]
+                ? Number(compatibility.time) * timeUnitToMinutes[compatibility.timeUnit]
+                : 0;
+    
+        // Supponendo che il tempo reale (busy) sia già in minuti
+        const realTimeInMinutes = activity.busy;
+    
+        return {
+            id: activity.id,
+            real: realTimeInMinutes, // Tempo reale in minuti
+            ideal: idealTime, // Tempo ideale in minuti
+        };
+    };
+    
 
     return (
         <div className="App">
@@ -328,9 +464,30 @@ function App() {
                 <input type="file" accept=".json" onChange={handleFileChange} className="fileInput"/>
                 <button onClick={startSimulation} className="startSimulationButton">Avvia Simulazione</button>
             </div>
+            <div className="layoutContainer">
             <div id="diagramContainer" className="diagramContainer"></div>
-            <PropertiesDrawer shape={selectedElement} isOpen={isDrawerOpen} setIsOpen={setDrawerOpen} simulationPercentages={simulationPercentages} />
-            {simulationStarted && jsonData && <D3Chart data={getExecutorsData()} selectedMetric={selectedMetric} />}
+            {simulationStarted && (
+                <div className="sidePanel">
+                    {activeChart === 'pie' && selectedExecutor && (
+                        <>
+                            <PieChart activities={selectedExecutor.activities} />
+                            {selectedExecutor.activities.map(activity => {
+                                const chartData = getBarChartDataForActivity(activity);
+                                return chartData ? (
+                                    <BarChart
+                                        key={activity.id}
+                                        title={`${activity.id}`}
+                                        data={[chartData]}
+                                    />
+                                ) : null;
+                            })}
+                        </>
+                    )}
+                    {activeChart === 'd3' && <D3Chart idealTime={idealTime} realTime={realTime} title="Confronto tempo Ideale e Reale" />}
+                </div>
+            )}
+            </div>
+            <PropertiesDrawer shape={selectedElement} isOpen={isDrawerOpen} setIsOpen={setDrawerOpen} simulationPercentages={simulationPercentages}/>
         </ModelerRefContext.Provider>
         </div>
     );
