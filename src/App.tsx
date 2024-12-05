@@ -233,13 +233,66 @@ function App() {
 
     const [simulationPercentages, setSimulationPercentages] = useState<Map<string, { busy: number, idle: number }>>(new Map());
     const [simulationStarted, setSimulationStarted] = useState(false);
-
-    const calculateBusyPercentageForExecutor = (executor: Executor, totalTime: number): number => {
-        const totalBusyTime = executor.activities.reduce((total, activity) => total + activity.busy, 0);
-        return (totalBusyTime / totalTime) * 100;
+    
+    const calculateBusyPercentageForExecutor = (executor: Executor, compatibilities: Compatibility[]): number => {
+        if (!Array.isArray(compatibilities) || compatibilities.length === 0) {
+            console.error("Compatibilities data is missing or invalid:", compatibilities);
+            return 0;
+        }
+    
+        if (!Array.isArray(executor.activities) || executor.activities.length === 0) {
+            console.error(`No activities found for executor ${executor.id}`);
+            return 0;
+        }
+    
+        // Mappa per la conversione dei formati di tempo in minuti
+        const timeUnitToMinutes = {
+            s: 1 / 60, // Secondi in minuti
+            m: 1, // Minuti
+            h: 60, // Ore in minuti
+            d: 1440, // Giorni in minuti
+        };
+    
+        // Calcolo del tempo stimato totale
+        const totalEstimatedTime = executor.activities.reduce((total, activity) => {
+            // Trova la compatibilità usando idActivity e idExecutor
+            const compatibility = compatibilities.find(
+                comp => comp.idActivity === activity.id && comp.idExecutor === executor.id
+            );
+    
+            if (!compatibility) {
+                console.warn(`No compatibility found for activity ${activity.id} and executor ${executor.id}`);
+                return total; // Nessuna compatibilità trovata, ignoriamo questa attività
+            }
+    
+            // Conversione del tempo stimato in minuti
+            const estimatedTime = timeUnitToMinutes[compatibility.timeUnit]
+                ? Number(compatibility.time) * timeUnitToMinutes[compatibility.timeUnit]
+                : 0;
+    
+            console.log(`Activity ${activity.id} estimated time: ${estimatedTime} minutes`);
+            return total + estimatedTime;
+        }, 0);
+    
+        // Calcolo del tempo totale di "busy"
+        const totalBusyTime = executor.activities.reduce((total, activity) => {
+            console.log(`Activity ${activity.id} busy time: ${activity.busy}`);
+            return total + activity.busy; // Busy time è già in minuti
+        }, 0);
+    
+        if (totalEstimatedTime === 0) {
+            console.warn(`Total estimated time for Executor ${executor.id} is zero.`);
+            return 0;
+        }
+    
+        // Calcolo della percentuale basata sulla differenza
+        const percentage = ((totalBusyTime - totalEstimatedTime) / totalEstimatedTime) * 100;
+    
+        console.log(`Executor ${executor.id}: total busy time = ${totalBusyTime}, total estimated time = ${totalEstimatedTime}, percentage = ${percentage}`);
+        return percentage;
     };
     
-
+    
     // Funzione di avvio della simulazione
     const startSimulation = () => {
         if (jsonData) {
@@ -255,7 +308,7 @@ function App() {
                 let idlePercentage: number;
 
                 // Calcola le percentuali di busy o idle 
-                busyPercentage = calculateBusyPercentageForExecutor(executor, jsonData.simulation.totalTime);
+                busyPercentage = calculateBusyPercentageForExecutor(executor, modelerContext.compatibilities);
                 idlePercentage = ((executor.idle) / jsonData.simulation.totalTime) * 100;  
                
                 updatedPercentages.set(executor.id, { busy: busyPercentage, idle: idlePercentage });
@@ -281,9 +334,9 @@ function App() {
     };
 
     const getColorClass = (busyPercentage: number) => {
-        if (busyPercentage <= 33) {
+        if (busyPercentage <= 5) {
         return 'bpmn-element-green';  
-        } else if (busyPercentage <= 66) {
+        } else if (busyPercentage <= 25) {
         return 'bpmn-element-yellow';  
         } else {
         return 'bpmn-element-red';  

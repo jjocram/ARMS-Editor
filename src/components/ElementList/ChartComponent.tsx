@@ -36,8 +36,8 @@ const D3Chart: React.FC<D3ChartProps> = ({ idealTime, realTime, title }) => {
         .range([0, width * 0.6]);
 
         const times = [
-        { label: 'Tempo Ideale', time: idealTime },
-        { label: 'Tempo Reale', time: realTime }
+            { label: 'Tempo Ideale', time: `${idealTime} min` },
+            { label: 'Tempo Reale', time: `${realTime} min` }
         ];
 
         svg.selectAll('.bar')
@@ -47,7 +47,7 @@ const D3Chart: React.FC<D3ChartProps> = ({ idealTime, realTime, title }) => {
         .attr('class', 'bar')
         .attr('x', 0)
         .attr('y', (d, i) => i * 30 + 20) // Aggiusta la posizione delle barre per il titolo
-        .attr('width', d => x(d.time))
+        .attr('width', d => x(parseFloat(d.time)))
         .attr('height', 25)
         .attr('fill', (d, i) => i % 2 ? 'steelblue' : 'green');
 
@@ -55,7 +55,7 @@ const D3Chart: React.FC<D3ChartProps> = ({ idealTime, realTime, title }) => {
         .data(times)
         .enter()
         .append('text')
-        .attr('x', d => x(d.time) + 3)
+        .attr('x', d => x(parseFloat(d.time)) + 3)
         .attr('y', (d, i) => i * 30 + 35) // Aggiusta la posizione delle label per il titolo
         .attr('dy', '.35em')
         .attr('fill', 'black')
