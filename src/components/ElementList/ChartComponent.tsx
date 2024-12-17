@@ -36,8 +36,8 @@ const D3Chart: React.FC<D3ChartProps> = ({ idealTime, realTime, title }) => {
         .range([0, width * 0.6]);
 
         const times = [
-            { label: 'Tempo Ideale', time: `${idealTime} min` },
-            { label: 'Tempo Reale', time: `${realTime} min` }
+            { label: 'Tempo Ideale', time: `${idealTime}` },
+            { label: 'Tempo Reale', time: `${realTime}` }
         ];
 
         svg.selectAll('.bar')

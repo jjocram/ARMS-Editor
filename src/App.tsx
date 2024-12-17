@@ -31,6 +31,13 @@ import D3Chart from './components/ElementList/ChartComponent.tsx';
 import PieChart from './components/ElementList/PieChart.tsx';
 import BarChart from './components/ElementList/BarChart.tsx';
 
+import Modal from "react-modal";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faPencilAlt } from "@fortawesome/free-solid-svg-icons";
+
+import ColorRangeSlider from './components/ElementList/ColorRangeSlider.tsx';
+
+Modal.setAppElement("#root");
 interface ElementEvent {
     element: Shape,
     stopPropagation: () => void,
@@ -49,6 +56,10 @@ function App() {
 
     const [activeChart, setActiveChart] = useState<'pie' | 'd3'>('d3');
 
+    const [isModalOpen, setModalOpen] = useState(false);
+    const openModal = () => setModalOpen(true);
+    const closeModal = () => setModalOpen(false);
+    
     function initializeModeler() {
         const container = document.getElementById('diagramContainer') as HTMLElement;
         if (!modelerRef.current && container) {
@@ -83,26 +94,26 @@ function App() {
         }
     }
 
-    //PER DIAGRAMMA 
-    /*const getExecutorsData = () => {
-        if (!jsonData) return [];
-    
-        return jsonData.executors.map((executor: Executor) => ({
-            id: executor.id,
-            busy: executor.busy,
-            idle: executor.idle,
-        }));
-    };    */
+    type TimeUnit = 's' | 'm' | 'h' | 'd';
 
     interface Activity {
         id: string;
         busy: number;
+        busyUnit: TimeUnit;  
+        maxWaitTimeInQueue: number;
+        avgWaitTimeInQueue: number;
+        sumWaitTimeInQueue: number;
+        processedItems: number;
     }
-    
+
     interface Executor {
         id: string;
-        maxQueueLength: number;
         idle: number;
+        sumWaitTimeInQueue: number;
+        busy: number; // Tempo totale di busy dell'esecutore
+        maxWaitTimeInQueue: number;
+        avgWaitTimeInQueue: number;
+        processedItems: number;
         activities: Activity[];
     }
 
@@ -234,114 +245,86 @@ function App() {
     const [simulationPercentages, setSimulationPercentages] = useState<Map<string, { busy: number, idle: number }>>(new Map());
     const [simulationStarted, setSimulationStarted] = useState(false);
     
-    const calculateBusyPercentageForExecutor = (executor: Executor, compatibilities: Compatibility[]): number => {
-        if (!Array.isArray(compatibilities) || compatibilities.length === 0) {
-            console.error("Compatibilities data is missing or invalid:", compatibilities);
+    const calculateBusyValueForExecutor = (executor: Executor): number => {
+        const totalBusyTime = executor.busy; // Tempo totale busy fornito
+        const totalQueueTime = executor.sumWaitTimeInQueue || 0; // Tempo totale in coda fornito
+    
+        const totalTime = totalBusyTime + totalQueueTime;
+    
+        if (totalTime === 0) {
+            console.warn(`Total time (busy + queue) for Executor ${executor.id} is zero.`);
             return 0;
         }
     
-        if (!Array.isArray(executor.activities) || executor.activities.length === 0) {
-            console.error(`No activities found for executor ${executor.id}`);
-            return 0;
-        }
-    
-        // Mappa per la conversione dei formati di tempo in minuti
-        const timeUnitToMinutes = {
-            s: 1 / 60, // Secondi in minuti
-            m: 1, // Minuti
-            h: 60, // Ore in minuti
-            d: 1440, // Giorni in minuti
-        };
-    
-        // Calcolo del tempo stimato totale
-        const totalEstimatedTime = executor.activities.reduce((total, activity) => {
-            // Trova la compatibilità usando idActivity e idExecutor
-            const compatibility = compatibilities.find(
-                comp => comp.idActivity === activity.id && comp.idExecutor === executor.id
-            );
-    
-            if (!compatibility) {
-                console.warn(`No compatibility found for activity ${activity.id} and executor ${executor.id}`);
-                return total; // Nessuna compatibilità trovata, ignoriamo questa attività
-            }
-    
-            // Conversione del tempo stimato in minuti
-            const estimatedTime = timeUnitToMinutes[compatibility.timeUnit]
-                ? Number(compatibility.time) * timeUnitToMinutes[compatibility.timeUnit]
-                : 0;
-    
-            console.log(`Activity ${activity.id} estimated time: ${estimatedTime} minutes`);
-            return total + estimatedTime;
-        }, 0);
-    
-        // Calcolo del tempo totale di "busy"
-        const totalBusyTime = executor.activities.reduce((total, activity) => {
-            console.log(`Activity ${activity.id} busy time: ${activity.busy}`);
-            return total + activity.busy; // Busy time è già in minuti
-        }, 0);
-    
-        if (totalEstimatedTime === 0) {
-            console.warn(`Total estimated time for Executor ${executor.id} is zero.`);
-            return 0;
-        }
-    
-        // Calcolo della percentuale basata sulla differenza
-        const percentage = ((totalBusyTime - totalEstimatedTime) / totalEstimatedTime) * 100;
-    
-        console.log(`Executor ${executor.id}: total busy time = ${totalBusyTime}, total estimated time = ${totalEstimatedTime}, percentage = ${percentage}`);
-        return percentage;
+        // Formula per il calcolo del valore busy
+        const value = totalBusyTime / totalTime;
+        console.log(`Executor ${executor.id}: busy value = ${value}`);
+        return value; // Valore tra 0 e 1
     };
     
+    const getColorClass = (value: number, selectedMetric: string) => {
+        if (selectedMetric === 'busy') {
+            if (value > 0.75) {
+                return 'bpmn-element-green'; // Verde
+            } else if (value >= 0.51 && value <= 0.74) {
+                return 'bpmn-element-yellow'; // Giallo
+            } else {
+                return 'bpmn-element-red'; // Rosso
+            }
+        } else { // Metrica 'idle'
+            if (value <= 0.05) {
+                return 'bpmn-element-green'; // Verde
+            } else if (value <= 0.25) {
+                return 'bpmn-element-yellow'; // Giallo
+            } else {
+                return 'bpmn-element-red'; // Rosso
+            }
+        }
+    };
     
-    // Funzione di avvio della simulazione
     const startSimulation = () => {
         if (jsonData) {
             console.log("Simulazione avviata con dati:", jsonData);
-
-            const executors: Executor[] = jsonData.executors;  
-
-            const updatedPercentages: Map<string, { busy: number, idle: number }> = new Map();  
-
-            executors.forEach((executor: Executor) => {  
-                let percentage;
-                let busyPercentage: number;
-                let idlePercentage: number;
-
-                // Calcola le percentuali di busy o idle 
-                busyPercentage = calculateBusyPercentageForExecutor(executor, modelerContext.compatibilities);
-                idlePercentage = ((executor.idle) / jsonData.simulation.totalTime) * 100;  
-               
-                updatedPercentages.set(executor.id, { busy: busyPercentage, idle: idlePercentage });
-
+    
+            const executors: Executor[] = jsonData.executors;
+    
+            const updatedPercentages: Map<string, { busy: number; idle: number }> = new Map();
+    
+            executors.forEach((executor: Executor) => {
+                let busyValue = 0;
+                let idleValue = 0;
+    
                 if (selectedMetric === 'busy') {
-                    percentage= busyPercentage 
-                }else{
-                    percentage = idlePercentage;
+                    // Calcola il valore di busy con la nuova formula
+                    busyValue = calculateBusyValueForExecutor(executor);
+                } else {
+                    // Calcola il valore di idle
+                    const simulationTotalTime = jsonData.simulation.totalTime || 1;
+                    idleValue = executor.idle / simulationTotalTime;
                 }
-                const colorClass = getColorClass(percentage);  
+    
+                // Aggiungi i valori alla mappa mantenendo entrambe le proprietà
+                updatedPercentages.set(executor.id, {
+                    busy: busyValue,
+                    idle: idleValue,
+                });
+    
+                // Determina la classe del colore in base alla metrica selezionata
+                const value = selectedMetric === 'busy' ? busyValue : idleValue;
+                const colorClass = getColorClass(value, selectedMetric);
                 changeElementClass(executor.id, colorClass);
             });
-
-            // Aggiorna lo stato con le nuove percentuali
+    
+            // Aggiorna lo stato con i nuovi valori
             setSimulationPercentages(updatedPercentages);
             setRealTime(jsonData.simulation.totalTime);
             setIdealTime(calculateIdealTime(jsonData.executors));
-            setSimulationStarted(true);   
-
+            setSimulationStarted(true);
         } else {
             alert("Carica un file JSON prima di avviare la simulazione.");
         }
     };
-
-    const getColorClass = (busyPercentage: number) => {
-        if (busyPercentage <= 5) {
-        return 'bpmn-element-green';  
-        } else if (busyPercentage <= 25) {
-        return 'bpmn-element-yellow';  
-        } else {
-        return 'bpmn-element-red';  
-        }
-    };
+    
     
     // Funzione per cambiare la classe CSS di un elemento nel diagramma utilizzando l'ID
     const changeElementClass = (elementId: string, colorClass: string) => {
@@ -472,73 +455,146 @@ function App() {
         setXmlDiagramToEmpty();
     }, []);
 
+    // Funzione helper per convertire il tempo in minuti
+    const convertToMinutes = (time: number, unit: TimeUnit): number => {
+        switch (unit) {
+            case 's': return time / 60;   // Converti secondi in minuti
+            case 'm': return time;        // Minuti sono già minuti
+            case 'h': return time * 60;   // Converti ore in minuti
+            case 'd': return time * 1440; // Converti giorni in minuti
+            default: return time;         // Gestire il caso di default come non necessario
+        }
+    };
+
     // Funzione per ottenere i dati combinati per una singola attività
-    const getBarChartDataForActivity = (activity: any) => {
+    const getBarChartDataForActivity = (activity: Activity): { id: string, ideal: number, average: number, max: number } | null => {
         if (!selectedExecutor || !modelerContext.compatibilities) {
             return null;
         }
-    
-        // Mappa per la conversione dei formati di tempo in minuti
-        const timeUnitToMinutes = {
-            s: 1 / 60, // Secondi in minuti
-            m: 1, // Minuti
-            h: 60, // Ore in minuti
-            d: 1440, // Giorni in minuti
-        };
-    
-        // Trova la compatibilità corrispondente
-        const compatibility = modelerContext.compatibilities.find(
-            (comp: Compatibility) =>
-                comp.idActivity === activity.id && comp.idExecutor === selectedExecutor.id
+
+        const compatibility = modelerContext.compatibilities.find(comp =>
+            comp.idActivity === activity.id && comp.idExecutor === selectedExecutor.id
         );
-    
-        // Conversione del tempo ideale in minuti
-        const idealTime =
-            compatibility && timeUnitToMinutes[compatibility.timeUnit]
-                ? Number(compatibility.time) * timeUnitToMinutes[compatibility.timeUnit]
-                : 0;
-    
-        // Supponendo che il tempo reale (busy) sia già in minuti
-        const realTimeInMinutes = activity.busy;
-    
+
+        if (!compatibility) {
+            console.error("No compatibility found for this activity and executor.");
+            return null;
+        }
+
+        const idealTime = convertToMinutes(compatibility.time, compatibility.timeUnit);
+
+        const averageTime = (activity.busy + activity.sumWaitTimeInQueue) / activity.processedItems;
+
+        const maxTime = (activity.busy/activity.processedItems) + activity.maxWaitTimeInQueue; 
+
         return {
             id: activity.id,
-            real: realTimeInMinutes, // Tempo reale in minuti
-            ideal: idealTime, // Tempo ideale in minuti
+            ideal: idealTime,
+            average: averageTime,
+            max: maxTime
         };
     };
-    
+
+    const getExecutorMax = (executor: Executor): number => {
+        // Calcolo del valore massimo tra tutte le attività dell'esecutore
+        return Math.max(
+            ...executor.activities.flatMap(activity => [
+                activity.busy,
+                activity.processedItems > 0 ? (activity.busy + activity.sumWaitTimeInQueue) / activity.processedItems : 0, // Tempo medio
+                (activity.busy/activity.processedItems) + activity.maxWaitTimeInQueue, // Tempo massimo
+            ])
+        );
+    };
+
+    const [colorRanges, setColorRanges] = useState({ green: 50, yellow: 75, red: 100 });
+
+    const handleRangeChange = (ranges: { green: number; yellow: number; red: number }) => {
+        console.log("Nuove soglie:", ranges);
+        setColorRanges(ranges);
+        // Qui puoi aggiornare la logica per cambiare i colori degli esecutori.
+    };
 
     return (
         <div className="App">
         <ModelerRefContext.Provider value={modelerContext}>
             <MenuBar setXmlDiagramToEmpty={() => {}} setSelectedMetric={setSelectedMetric} />
+                <div style={{ position: 'absolute', top: 10, right: '20px', zIndex: 10 }}>
+                    {simulationStarted && (
+                        <button onClick={openModal} className="editButton" title="Modifica Simulazione" style={{ position: 'absolute', top: '50px', right: '350px', zIndex: 10, }}>
+                            <FontAwesomeIcon icon={faPencilAlt} />
+                        </button>
+                    )}
+                </div>
             <div className="simulationControls">
                 <input type="file" accept=".json" onChange={handleFileChange} className="fileInput"/>
                 <button onClick={startSimulation} className="startSimulationButton">Avvia Simulazione</button>
+                
             </div>
+            <Modal
+                isOpen={isModalOpen}
+                onRequestClose={closeModal}
+                contentLabel="Modifica Simulazione"
+                style={{overlay: { backgroundColor: "rgba(0, 0, 0, 0.5)" },
+                    content: {width: "400px", height: "300px", margin: "auto", padding: "20px", borderRadius: "10px",},
+                }}
+            >
+                <h4>Modifica Parametri della Simulazione</h4>
+                <ColorRangeSlider initialRanges={colorRanges} onChange={handleRangeChange} />
+                <div className="modalFooter">
+                    <button onClick={closeModal} className="closeButton">
+                        Chiudi
+                    </button>
+                    <button className="saveButton">Salva Modifiche</button>
+                </div>
+            </Modal>
             <div className="layoutContainer">
             <div id="diagramContainer" className="diagramContainer"></div>
             {simulationStarted && (
                 <div className="sidePanel">
+                    {/* Grafico a Torta per l'Esecutore Selezionato */}
                     {activeChart === 'pie' && selectedExecutor && (
                         <>
                             <PieChart activities={selectedExecutor.activities} />
                             {selectedExecutor.activities.map(activity => {
                                 const chartData = getBarChartDataForActivity(activity);
+                                const executorMax = getExecutorMax(selectedExecutor);
+
                                 return chartData ? (
-                                    <BarChart
-                                        key={activity.id}
-                                        title={`${activity.id}`}
-                                        data={[chartData]}
-                                    />
+                                    <BarChart key={activity.id} title={`Activity ${activity.id}`} data={[chartData]} globalMax={executorMax}/>
                                 ) : null;
                             })}
                         </>
                     )}
-                    {activeChart === 'd3' && <D3Chart idealTime={idealTime} realTime={realTime} title="Confronto tempo Ideale e Reale" />}
+
+                    {/* Grafico D3 Generale */}
+                    {activeChart === 'd3' && (
+                        <D3Chart idealTime={idealTime} realTime={realTime} title="Confronto tempo Ideale e Reale"/>
+                    )}
+
+                    {/* Applica le classi CSS dinamiche agli esecutori nel diagramma */}
+                    {jsonData.executors.forEach((executor: Executor) => {
+                        const elementRegistry = modelerRef.current?.get("elementRegistry");
+                        const element = elementRegistry?.get(executor.id) as Shape | undefined;
+
+                        if (element) {
+                            const gfx = modelerRef.current?.get("canvas").getGraphics(element) as HTMLElement | undefined;
+
+                            if (gfx) {
+                                // Rimuovi le classi precedenti
+                                gfx.classList.remove('executor-highlight', 'executor-dimmed');
+
+                                // Aggiungi le classi appropriate
+                                if (selectedExecutor?.id === executor.id || !selectedExecutor) {
+                                    gfx.classList.add('executor-highlight'); // Evidenzia l'esecutore selezionato
+                                } else {
+                                    gfx.classList.add('executor-dimmed'); // Oscura gli esecutori non selezionati
+                                }
+                            }
+                        }
+                    })}
                 </div>
             )}
+
             </div>
             <PropertiesDrawer shape={selectedElement} isOpen={isDrawerOpen} setIsOpen={setDrawerOpen} simulationPercentages={simulationPercentages}/>
         </ModelerRefContext.Provider>

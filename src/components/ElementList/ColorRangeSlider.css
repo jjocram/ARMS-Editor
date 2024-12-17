@@ -1,0 +1,46 @@
+.color-range-slider {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    padding: 10px;
+    background-color: #f9f9f9;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+}
+
+.slider-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.slider-row label {
+    flex: 1;
+    font-weight: bold;
+    color: #555;
+}
+
+.slider-row input[type="range"] {
+    flex: 3;
+    appearance: none;
+    height: 8px;
+    background: #ddd;
+    border-radius: 5px;
+    outline: none;
+}
+
+.slider-row input[type="range"]::-webkit-slider-thumb {
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    background: #007bff;
+    border-radius: 50%;
+    cursor: pointer;
+}
+
+.slider-row span {
+    flex: 1;
+    text-align: right;
+    color: #333;
+    font-weight: bold;
+}

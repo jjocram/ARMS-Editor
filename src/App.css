@@ -36,6 +36,15 @@
   fill-opacity: 0.3 !important;
 }
 
+.executor-highlight {
+  opacity: 1;
+  transition: opacity 0.3s ease;
+}
+
+.executor-dimmed {
+  opacity: 0.5;
+  transition: opacity 0.3s ease;
+}
 
 .layoutContainer {
   display: flex;
@@ -52,4 +61,63 @@
   border-left: 1px solid #ccc; 
   height: 100%; 
   overflow: auto; 
+}
+
+/*PANNELLO MODIFICHE SIMULAZIONE*/
+.editButton {
+  background-color: var(--rs-btn-default-bg);
+  border: var(--rs-btn-default-border, none);
+  border-radius: 6px;
+  cursor: pointer;
+  right: calc(20px + 400px);
+  font-size: 14px;
+  font-weight: 400;
+  justify-content: center;
+  line-height: 20px;
+  margin-bottom: 0;
+  overflow: hidden;
+  padding: 8px 12px;
+}
+
+.editButton:hover {
+  background-color: var(--rs-btn-default-hover-bg);
+  color: var(--rs-btn-default-hover-text);
+}
+
+.modalContent label {
+  display: block;
+  margin-bottom: 15px;
+  font-size: 14px;
+}
+
+.modalFooter {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 20px;
+}
+
+.closeButton,
+.saveButton {
+  padding: 8px 12px;
+  border: none;
+  cursor: pointer;
+  border-radius: 5px;
+}
+
+.closeButton {
+  background-color: #929292;
+  color: white;
+}
+
+.saveButton {
+  background-color: var(--rs-btn-default-bg);;
+  color: var(--rs-btn-default-text);
+}
+
+.saveButton:hover {
+  background-color: var(--rs-btn-default-hover-bg);
+}
+
+.closeButton:hover {
+  background-color: #6e6e6e;
 }
