@@ -54,7 +54,10 @@ function App() {
 
     const [selectedMetric, setSelectedMetric] = useState<'busy' | 'idle'>('busy');  
 
-    const [activeChart, setActiveChart] = useState<'pie' | 'd3'>('d3');
+    const [selectedExecutor, setSelectedExecutor] = useState<Executor | null>(null); // Esecutore selezionato
+    const [selectedActivity, setSelectedActivity] = useState<Activity | null>(null); // Attività selezionata
+    //const [pieChartData, setPieChartData] = useState<{ id: string; value: number }[]>([]); // Dati per grafico a torta
+    const [activeChart, setActiveChart] = useState<'pie' | 'd3'>('d3'); // Tipo di grafico attivo
 
     const [isModalOpen, setModalOpen] = useState(false);
     const openModal = () => setModalOpen(true);
@@ -263,6 +266,9 @@ function App() {
     };
     
     const getColorClass = (value: number, selectedMetric: string) => {
+        if (value === 0) {
+            return ''; // Nessuna classe
+        }
         if (selectedMetric === 'busy') {
             if (value > 0.75) {
                 return 'bpmn-element-green'; // Verde
@@ -338,8 +344,9 @@ function App() {
                 // Rimuovi qualsiasi classe precedente
                 gfx.classList.remove('bpmn-element-green', 'bpmn-element-yellow', 'bpmn-element-red');
                 
-                // Aggiungi la classe CSS appropriata
-                gfx.classList.add(colorClass);
+                if (colorClass) {
+                    gfx.classList.add(colorClass);
+                }
             }
         } else {
             console.error("Elemento non trovato nel elementRegistry per ID:", elementId);
@@ -385,12 +392,14 @@ function App() {
         }, 0);
     };
     
-    const [selectedExecutor, setSelectedExecutor] = useState<Executor | null>(null);
-    
     interface BPMNEventBus {
         on: (event: string, callback: (event: any) => void) => void;
         off: (event: string, callback: (event: any) => void) => void;
     }
+
+    const [executorChartData, setExecutorChartData] = useState<{ id: string; value: number }[]>([]);
+    const [activityChartData, setActivityChartData] = useState<{ id: string; value: number }[]>([]);
+
 
     useEffect(() => {
         if (!simulationStarted || !jsonData || !modelerRef.current) {
@@ -412,28 +421,68 @@ function App() {
         // Gestore per clic sugli elementi
         const handleElementClick = (event: any) => {
             const element = event.element;
-    
+        
+            // Controlla se l'elemento ha un ID valido
             if (!element || !element.id) {
-                console.log("No element found in the event or element lacks an ID.");
-                setActiveChart('d3');
+                console.log("Nessun elemento trovato o l'elemento non ha un ID.");
+                setActiveChart('d3'); // Torna al grafico D3 di default
                 setSelectedExecutor(null);
+                setSelectedActivity(null);
                 return;
-
             }
-    
-            console.log("Element ID extracted from event:", element.id);
-    
-            // Usa l'id dell'elemento per trovare l'esecutore nel JSON
+        
+            console.log("Elemento selezionato con ID:", element.id);
+        
+            // Cerca se l'elemento è un esecutore
             const executor = jsonData.executors.find((exec: Executor) => exec.id === element.id);
-    
+        
+            // Cerca se l'elemento è un'attività (analizza tutte le attività degli esecutori)
+            const activity = jsonData.executors
+                .flatMap((exec: Executor) => exec.activities) // Estrae tutte le attività
+                .find((act: Activity) => act.id === element.id); // Cerca quella selezionata
+        
+            // Se è un esecutore
             if (executor) {
-                console.log("Executor matched:", executor.id);
+                console.log("Esecutore trovato:", executor.id);
                 setSelectedExecutor(executor);
-                setActiveChart('pie');
-            } else {
-                console.log("No executor matched the ID in JSON data.");
-                setActiveChart('d3');
+        
+                // Prepara i dati per il grafico delle attività svolte dall'esecutore
+                setExecutorChartData(executor.activities.map( (activity:Activity) => ({
+                    id: activity.id,
+                    value: activity.busy
+                })));
+        
+                setActiveChart('pie'); // Mostra grafico a torta
+                setSelectedActivity(null); // Resetta attività
+            } 
+            // Se è un'attività
+            else if (activity) {
+                console.log("Attività trovata:", activity.id);
+                setSelectedActivity(activity);
+        
+                // Prepara i dati per il grafico degli esecutori coinvolti in quell'attività
+                const executors = jsonData.executors.filter((exec: Executor) =>
+                    exec.activities.some((act: Activity) => act.id === activity.id)
+                );
+        
+                const activityChartData = executors.map((exec: Executor) => {
+                    const execActivity = exec.activities.find((act: Activity) => act.id === activity.id);
+                    return {
+                        id: exec.id, // ID dell'esecutore
+                        value: execActivity ? execActivity.busy : 0 // Tempo occupato
+                    };
+                });
+        
+                setActivityChartData(activityChartData);
+                setActiveChart('pie'); // Mostra grafico a torta
+                setSelectedExecutor(null); // Resetta esecutore
+            } 
+            // Se non è né un esecutore né un'attività
+            else {
+                console.log("Nessuna corrispondenza trovata.");
+                setActiveChart('d3'); // Torna al grafico D3 di default
                 setSelectedExecutor(null);
+                setSelectedActivity(null);
             }
         };
     
@@ -467,34 +516,39 @@ function App() {
     };
 
     // Funzione per ottenere i dati combinati per una singola attività
-    const getBarChartDataForActivity = (activity: Activity): { id: string, ideal: number, average: number, max: number } | null => {
-        if (!selectedExecutor || !modelerContext.compatibilities) {
+    const getBarChartDataForActivity = (activity: Activity): { 
+        id: string, 
+        busyPerProduct: number, 
+        average: number, 
+        max: number 
+    } | null => {
+        if (!selectedExecutor) {
             return null;
         }
-
-        const compatibility = modelerContext.compatibilities.find(comp =>
-            comp.idActivity === activity.id && comp.idExecutor === selectedExecutor.id
-        );
-
-        if (!compatibility) {
-            console.error("No compatibility found for this activity and executor.");
-            return null;
-        }
-
-        const idealTime = convertToMinutes(compatibility.time, compatibility.timeUnit);
-
-        const averageTime = (activity.busy + activity.sumWaitTimeInQueue) / activity.processedItems;
-
-        const maxTime = (activity.busy/activity.processedItems) + activity.maxWaitTimeInQueue; 
-
+    
+        // Calcolo di busy per prodotto processato
+        const busyPerProduct = activity.processedItems > 0
+            ? activity.busy / activity.processedItems
+            : 0; // Evita divisioni per 0
+    
+        // Calcolo del tempo medio
+        const averageTime = activity.processedItems > 0
+            ? (activity.busy + activity.sumWaitTimeInQueue) / activity.processedItems
+            : 0;
+    
+        // Calcolo del tempo massimo
+        const maxTime = activity.processedItems > 0
+            ? (activity.busy / activity.processedItems) + activity.maxWaitTimeInQueue
+            : 0;
+    
         return {
             id: activity.id,
-            ideal: idealTime,
+            busyPerProduct: busyPerProduct,  // Nuovo dato
             average: averageTime,
             max: maxTime
         };
     };
-
+    
     const getExecutorMax = (executor: Executor): number => {
         // Calcolo del valore massimo tra tutte le attività dell'esecutore
         return Math.max(
@@ -506,12 +560,13 @@ function App() {
         );
     };
 
-    const [colorRanges, setColorRanges] = useState({ green: 50, yellow: 75, red: 100 });
+    const [colorRanges] = useState({
+        green: 0.75, // Valore iniziale per il verde
+        yellow: 0.5, // Valore iniziale per il giallo
+    });
 
     const handleRangeChange = (ranges: { green: number; yellow: number; red: number }) => {
-        console.log("Nuove soglie:", ranges);
-        setColorRanges(ranges);
-        // Qui puoi aggiornare la logica per cambiare i colori degli esecutori.
+        console.log("Nuovi range:", ranges);
     };
 
     return (
@@ -539,7 +594,7 @@ function App() {
                 }}
             >
                 <h4>Modifica Parametri della Simulazione</h4>
-                <ColorRangeSlider initialRanges={colorRanges} onChange={handleRangeChange} />
+                <ColorRangeSlider initialValues={colorRanges} onChange={handleRangeChange} />
                 <div className="modalFooter">
                     <button onClick={closeModal} className="closeButton">
                         Chiudi
@@ -551,6 +606,12 @@ function App() {
             <div id="diagramContainer" className="diagramContainer"></div>
             {simulationStarted && (
                 <div className="sidePanel">
+                    {activeChart === 'pie' && selectedActivity && (
+                        <PieChart activities={activityChartData.map(item => ({
+                            id: item.id,
+                            busy: item.value
+                        }))} />
+                    )}
                     {/* Grafico a Torta per l'Esecutore Selezionato */}
                     {activeChart === 'pie' && selectedExecutor && (
                         <>

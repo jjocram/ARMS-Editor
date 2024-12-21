@@ -3,7 +3,7 @@ import * as d3 from 'd3';
 
 interface BarChartData {
     id: string;
-    ideal: number; // Tempo ideale
+    busyPerProduct: number; // Tempo impiegato per prodotto 
     average: number; // Tempo medio
     max: number; // Tempo massimo
 }
@@ -17,11 +17,21 @@ interface BarChartProps {
 const BarChart: React.FC<BarChartProps> = ({ data, title, globalMax }) => {
     const ref = useRef<HTMLDivElement>(null);
 
+    const isInactive = (data: BarChartData[]) => {
+        return data.every(d => d.busyPerProduct === 0 && d.average === 0 && d.max === 0);
+    };
+    
     useEffect(() => {
         if (!data || data.length === 0) return;
 
         const container = d3.select(ref.current);
+
+        if (!data || data.length === 0 || isInactive(data)) {
+            container.selectAll("*").remove(); // Rimuove tutto
+            return; // Esce senza disegnare nulla
+        }
         container.selectAll("*").remove(); // Pulisce il contenitore
+
 
         const margin = { top: 20, right: 30, bottom: 5, left: 60 }; // Margini
         const width = 350 - margin.left - margin.right; // Larghezza grafico
@@ -43,8 +53,8 @@ const BarChart: React.FC<BarChartProps> = ({ data, title, globalMax }) => {
             .attr("transform", `translate(${margin.left},${margin.top})`);
 
         // Scala logaritmica per il massimo valore
-        const x = d3.scaleLog()
-            .domain([1, globalMax]) // Scala logaritmica a partire da 1
+        const x = d3.scaleLinear()
+            .domain([1, globalMax]) 
             .range([0, width]);
 
         const y = d3.scaleBand()
@@ -54,7 +64,7 @@ const BarChart: React.FC<BarChartProps> = ({ data, title, globalMax }) => {
 
         const bandWidth = y.bandwidth() / 3; // Divide la banda per 3 barre
 
-        const keys = ['ideal', 'average', 'max'];
+        const keys = ['busyPerProduct', 'average', 'max'];
         const colors = ['steelblue', 'lightblue', 'red'];
 
         keys.forEach((key, index) => {

@@ -1,9 +1,8 @@
 .color-range-slider {
     display: flex;
     flex-direction: column;
-    gap: 15px;
-    padding: 10px;
-    background-color: #f9f9f9;
+    gap: 20px;
+    padding: 20px;
     border: 1px solid #ddd;
     border-radius: 5px;
 }
@@ -18,19 +17,43 @@
     flex: 1;
     font-weight: bold;
     color: #555;
-}
+} 
 
-.slider-row input[type="range"] {
-    flex: 3;
-    appearance: none;
+.slider-container {
+    flex: 2;
+    position: relative;
     height: 8px;
     background: #ddd;
     border-radius: 5px;
+}
+
+.slider-thumb {
+    position: absolute;
+    width: 100%;
+    appearance: none;
+    background: transparent;
+    height: 8px;
     outline: none;
 }
 
-.slider-row input[type="range"]::-webkit-slider-thumb {
+.slider-thumb::-webkit-slider-thumb {
     appearance: none;
+    width: 16px;
+    height: 16px;
+    background: #007bff;
+    border-radius: 50%;
+    cursor: pointer;
+}
+
+.slider-thumb::-moz-range-thumb {
+    width: 16px;
+    height: 16px;
+    background: #007bff;
+    border-radius: 50%;
+    cursor: pointer;
+}
+
+.slider-thumb::-ms-thumb {
     width: 16px;
     height: 16px;
     background: #007bff;
