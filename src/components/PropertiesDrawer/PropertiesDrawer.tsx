@@ -251,6 +251,18 @@ function PropertiesDrawer({shape, isOpen, setIsOpen}: PropertiesDrawerProps) {
                                      })}/>
                     </InputGroup>
                 );
+            },
+            quantity: () => {
+                const executorElement = element as ExecutorElement; // TODO: what if it is not an ExecutorElement?
+                return (
+                    <InputGroup key="quantity">
+                        <InputGroup.Addon>Quantity</InputGroup.Addon>
+                        <InputNumber value={executorElement.quantity} placeholder="Quantity"
+                        onChange={newValue => setElement((prevElement) => {
+                            return Object.assign(Object.create(Object.getPrototypeOf(prevElement)),prevElement, {quantity: newValue})
+                        })}/>
+                    </InputGroup>
+                )
             }
         }
 

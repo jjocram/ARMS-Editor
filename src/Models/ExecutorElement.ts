@@ -7,10 +7,12 @@ import Compatibility from "./Compatibility.ts";
 export class ExecutorElement extends BaseElement {
 
     associatedCompatibilities: Array<Compatibility>;
+    quantity: number;
 
     constructor(shape: Shape | null, associatedCompatibilities: Array<Compatibility>) {
         super(shape);
         this.associatedCompatibilities = associatedCompatibilities;
+        this.quantity = shape?.quantity ?? 1;
     }
 
     toTreeNodeWithAssociatedProducts(): TreeNode {
@@ -22,5 +24,9 @@ export class ExecutorElement extends BaseElement {
             label: this.name ? this.name : this.id,
             children: children
         }
+    }
+
+    additionalInfo(): Array<string> {
+        return ["quantity"];
     }
 }
