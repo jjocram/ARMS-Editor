@@ -8,11 +8,19 @@ export class ExecutorElement extends BaseElement {
 
     associatedCompatibilities: Array<Compatibility>;
     quantity: number;
+    cost: number;
+    energyConsumption: number;
+    wasteGeneration: number;
+    maintenanceCost: number;
 
     constructor(shape: Shape | null, associatedCompatibilities: Array<Compatibility>) {
         super(shape);
         this.associatedCompatibilities = associatedCompatibilities;
         this.quantity = shape?.quantity ?? 1;
+        this.cost = shape?.cost ?? 0;
+        this.energyConsumption = shape?.energyConsumption ?? 0;
+        this.wasteGeneration = shape?.wasteGeneration ?? 0;
+        this.maintenanceCost = shape?.maintenanceCost ?? 0;
     }
 
     toTreeNodeWithAssociatedProducts(): TreeNode {
@@ -27,6 +35,6 @@ export class ExecutorElement extends BaseElement {
     }
 
     additionalInfo(): Array<string> {
-        return ["quantity"];
+        return ["quantity", "cost", "energyConsumption", "wasteGeneration", "maintenanceCost"];
     }
 }

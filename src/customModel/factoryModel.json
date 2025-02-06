@@ -16,6 +16,26 @@
           "name": "quantity",
           "isAttr": true,
           "type": "String"
+        },
+        {
+          "name": "cost",
+          "isAttr": true,
+          "type": "String"
+        },
+        {
+          "name": "energyConsumption",
+          "isAttr": true,
+          "type": "String"
+        },
+        {
+          "name": "wasteGeneration",
+          "isAttr": true,
+          "type": "String"
+        },
+        {
+          "name": "maintenanceCost",
+          "isAttr": true,
+          "type": "String"
         }
       ]
     },

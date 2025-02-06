@@ -8,7 +8,6 @@ import {
     IconButton,
     Input,
     InputGroup,
-    InputNumber,
     Row,
     Stack,
     Tree
@@ -26,7 +25,7 @@ import {Transformation} from "../../Models/Transformation.ts";
 import TransformationModal from "./TransformationModal.tsx";
 import Compatibility from "../../Models/Compatibility.ts";
 import MinusRoundIcon from "@rsuite/icons/MinusRound";
-import Inventory from "../../Models/Inventory.ts";
+import AdditionNumberInput from "../AdditionNumberInput.tsx";
 
 interface PropertiesDrawerProps {
     shape: Shape | null,
@@ -237,33 +236,42 @@ function PropertiesDrawer({shape, isOpen, setIsOpen}: PropertiesDrawerProps) {
 
         const additionalInfoMap: Record<string, () => React.ReactElement> = {
             startQuantity: () => {
-                const inventoryElement = element as Inventory;
                 return (
-                    <InputGroup key="startQuantity">
-                        <InputGroup.Addon>Start quantity</InputGroup.Addon>
-                        <InputNumber value={inventoryElement.startQuantity} placeholder="Start quantity"
-                                     onChange={newValue => setElement((prevElement) => {
-                                         return Object.assign(
-                                             Object.create(Object.getPrototypeOf(prevElement)),
-                                             prevElement,
-                                             {startQuantity: newValue}
-                                         );
-                                     })}/>
-                    </InputGroup>
+                    <AdditionNumberInput key="startQuantity" field="startQuantity" label="Start Quantity"
+                                         element={element} placeholder="Start quantity"
+                                         setElement={setElement}/>
                 );
             },
             quantity: () => {
-                const executorElement = element as ExecutorElement; // TODO: what if it is not an ExecutorElement?
                 return (
-                    <InputGroup key="quantity">
-                        <InputGroup.Addon>Quantity</InputGroup.Addon>
-                        <InputNumber value={executorElement.quantity} placeholder="Quantity"
-                        onChange={newValue => setElement((prevElement) => {
-                            return Object.assign(Object.create(Object.getPrototypeOf(prevElement)),prevElement, {quantity: newValue})
-                        })}/>
-                    </InputGroup>
+                    <AdditionNumberInput key="quantity" field="quantity" label="Quantity" element={element}
+                                         placeholder="Quantity" setElement={setElement}/>
                 )
-            }
+            },
+            cost: () => {
+                return (
+                    <AdditionNumberInput key="cost" field="cost" label="Cost" element={element}
+                                         placeholder="Cost per unit of time" setElement={setElement}/>
+                )
+            },
+            energyConsumption: () => {
+                return (
+                    <AdditionNumberInput key="energyConsumption" field="energyConsumption" label={"Energy"} element={element}
+                                         placeholder={"Energy consumption per unit of time"} setElement={setElement}/>
+                )
+            },
+            wasteGeneration: () => {
+                return (
+                    <AdditionNumberInput key="wasteGeneration" field="wasteGeneration" label={"Waste"} element={element}
+                                         placeholder={"Waste generation per unit of time"} setElement={setElement}/>
+                )
+            },
+            maintenanceCost: () => {
+                return (
+                    <AdditionNumberInput key="maintenanceCost" field="maintenanceCost" label={"Maintenance"} element={element}
+                                         placeholder={"Maintenance cost per unit of time"} setElement={setElement}/>
+                )
+            },
         }
 
         return (
