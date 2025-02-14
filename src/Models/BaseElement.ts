@@ -7,6 +7,7 @@ export class BaseElement {
     id: string;
     type: string;
     name: string;
+    script: string | undefined;
 
     constructor(shape: Shape | null) {
         if (shape === null) {
@@ -19,6 +20,7 @@ export class BaseElement {
         this.id = shape.id;
         this.type = shape.type;
         this.name = shape.name ?? shape.businessObject.name ?? "";
+        this.script = shape.businessObject.script;
     }
 
     save(modeler: Modeler): void {

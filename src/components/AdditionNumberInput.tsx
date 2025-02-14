@@ -16,7 +16,7 @@ export default function AdditionNumberInput({field, label, element, placeholder,
     return (
         <InputGroup>
             <InputGroup.Addon>{label}</InputGroup.Addon>
-            <InputNumber value={element[objectAttribute] as string} placeholder={placeholder} onChange={newValue => setElement((prevElement) => {
+            <InputNumber style={{width: "100%"}} value={element[objectAttribute] as string} placeholder={placeholder} onChange={newValue => setElement((prevElement) => {
                 return Object.assign(Object.create(Object.getPrototypeOf(prevElement)), prevElement, {[objectAttribute]: newValue})
             })}/>
         </InputGroup>

@@ -6,13 +6,10 @@ import {
     Grid,
     HStack,
     IconButton,
-    Input,
-    InputGroup,
     Row,
-    Stack,
     Tree
 } from "rsuite";
-import React, {useEffect, useState} from "react";
+import {useEffect, useState} from "react";
 import {useModelerRef} from "../../ModelerContext.ts";
 import {BaseElement} from "../../Models/BaseElement.ts";
 import {Shape} from "bpmn-js/lib/model/Types.ts";
@@ -25,7 +22,9 @@ import {Transformation} from "../../Models/Transformation.ts";
 import TransformationModal from "./TransformationModal.tsx";
 import Compatibility from "../../Models/Compatibility.ts";
 import MinusRoundIcon from "@rsuite/icons/MinusRound";
-import AdditionNumberInput from "../AdditionNumberInput.tsx";
+import BaseInfo from "./BaseInfo.tsx";
+import AdditionalInfo from "./AdditionalInfo.tsx";
+import ButtonOpenEditor from "./ButtonOpenEditor.tsx";
 
 interface PropertiesDrawerProps {
     shape: Shape | null,
@@ -43,6 +42,8 @@ function PropertiesDrawer({shape, isOpen, setIsOpen}: PropertiesDrawerProps) {
 
     const [showTransformationModal, setShowTransformationModal] = useState<boolean>(false);
     const [selectedTransformation, setSelectedTransformation] = useState<Transformation | undefined>(undefined);
+
+    const [showScriptEditorModal, setShowScriptEditorModal] = useState<boolean>(false);
 
     useEffect(() => {
         if (shape !== null) {
@@ -205,87 +206,6 @@ function PropertiesDrawer({shape, isOpen, setIsOpen}: PropertiesDrawerProps) {
         }
     }
 
-    function renderBaseInfo() {
-        return (
-            <>
-                <Accordion.Panel header="Base info">
-                    <Stack spacing={10} direction="column" alignItems="flex-start">
-                        <InputGroup>
-                            <InputGroup.Addon>Id</InputGroup.Addon>
-                            <Input value={element.id} readOnly/>
-                        </InputGroup>
-                        <InputGroup>
-                            <InputGroup.Addon>Type</InputGroup.Addon>
-                            <Input value={element.getDisplayType()} readOnly/>
-                        </InputGroup>
-                        <InputGroup>
-                            <InputGroup.Addon>Name</InputGroup.Addon>
-                            <Input value={element.name} onChange={handleElementNameChange}
-                                   placeholder="Element name"/>
-                        </InputGroup>
-                    </Stack>
-                </Accordion.Panel>
-            </>
-        )
-    }
-
-    function renderAdditionalInfo() {
-        if (element.additionalInfo().length === 0) {
-            return (<></>);
-        }
-
-        const additionalInfoMap: Record<string, () => React.ReactElement> = {
-            startQuantity: () => {
-                return (
-                    <AdditionNumberInput key="startQuantity" field="startQuantity" label="Start Quantity"
-                                         element={element} placeholder="Start quantity"
-                                         setElement={setElement}/>
-                );
-            },
-            quantity: () => {
-                return (
-                    <AdditionNumberInput key="quantity" field="quantity" label="Quantity" element={element}
-                                         placeholder="Quantity" setElement={setElement}/>
-                )
-            },
-            cost: () => {
-                return (
-                    <AdditionNumberInput key="cost" field="cost" label="Cost" element={element}
-                                         placeholder="Cost per unit of time" setElement={setElement}/>
-                )
-            },
-            energyConsumption: () => {
-                return (
-                    <AdditionNumberInput key="energyConsumption" field="energyConsumption" label={"Energy"} element={element}
-                                         placeholder={"Energy consumption per unit of time"} setElement={setElement}/>
-                )
-            },
-            wasteGeneration: () => {
-                return (
-                    <AdditionNumberInput key="wasteGeneration" field="wasteGeneration" label={"Waste"} element={element}
-                                         placeholder={"Waste generation per unit of time"} setElement={setElement}/>
-                )
-            },
-            maintenanceCost: () => {
-                return (
-                    <AdditionNumberInput key="maintenanceCost" field="maintenanceCost" label={"Maintenance"} element={element}
-                                         placeholder={"Maintenance cost per unit of time"} setElement={setElement}/>
-                )
-            },
-        }
-
-        return (
-            <Accordion.Panel header="Additional info">
-                <Stack spacing={10} direction="column" alignItems="flex-start">
-                    {element.additionalInfo().map(infoKey => {
-                        const renderFunction = additionalInfoMap[infoKey];
-                        return renderFunction ? renderFunction() : (<p>{infoKey} not found</p>);
-                    })}
-                </Stack>
-            </Accordion.Panel>
-        )
-    }
-
     return (
         <Drawer enforceFocus={false} open={isOpen} onClose={handleSaveElement}>
             <Drawer.Header>
@@ -293,10 +213,12 @@ function PropertiesDrawer({shape, isOpen, setIsOpen}: PropertiesDrawerProps) {
             </Drawer.Header>
             <Drawer.Body>
                 <Accordion>
-                    {renderBaseInfo()}
-                    {renderAdditionalInfo()}
+                    <BaseInfo element={element} handleElementNameChange={handleElementNameChange}/>
+                    <AdditionalInfo element={element} setElement={setElement}/>
                     {renderCompatibilities()}
                     {renderTransformations()}
+                    <ButtonOpenEditor element={element} show={showScriptEditorModal}
+                                      setShow={setShowScriptEditorModal}/>
                 </Accordion>
             </Drawer.Body>
         </Drawer>
