@@ -5,6 +5,7 @@ import {useModelerRef} from "../../ModelerContext.ts";
 import AccessoryListModal from "../ElementList/AccessoryListModal.tsx";
 import InventoryListModal from "../ElementList/InventoryListModal.tsx";
 import ProductRequestListModal from "../ElementList/ProductRequestListModal.tsx";
+import axios from "axios";
 
 interface MenuBarProps {
     setXmlDiagramToEmpty: () => void
@@ -50,6 +51,22 @@ export default function MenuBar({setXmlDiagramToEmpty} : MenuBarProps) {
         reader.readAsText(file);
     }
 
+    function runSimulation() {
+        modelerRef.modeler.current?.saveXML({format: true})
+            .then(async res => {
+                const file = new Blob([res.xml ?? ""], {type: 'text/xml'});
+
+                const formData = new FormData();
+                formData.append('file', file);
+
+                const response = await axios.post("http://127.0.0.1:8080/simulate", formData, {
+                    headers: {"Content-Type": "multipart/form-data"},
+                })
+
+                console.log(response.data);
+            });
+    }
+
     return (
         <>
             <ButtonToolbar>
@@ -69,6 +86,8 @@ export default function MenuBar({setXmlDiagramToEmpty} : MenuBarProps) {
                     <DropdownItem onSelect={() => setShowInventoriesModal(true)}>Inventories</DropdownItem>
                     <DropdownItem onSelect={() => setShowAccessoryModal(true)}>Accessories</DropdownItem>
                     <DropdownItem onSelect={() => setShowProductRequestModal(true)}>Product requests</DropdownItem>
+                    <Dropdown.Separator />
+                    <DropdownItem onSelect={runSimulation}>Run simulation</DropdownItem>
                 </Dropdown>
             </ButtonToolbar>
 
