@@ -59,9 +59,7 @@ export default function MenuBar({setXmlDiagramToEmpty} : MenuBarProps) {
                 const formData = new FormData();
                 formData.append('file', file);
 
-                const response = await axios.post("http://127.0.0.1:8080/simulate", formData, {
-                    headers: {"Content-Type": "multipart/form-data"},
-                })
+                const response = await axios.post("http://127.0.0.1:8080/simulate", formData);
 
                 console.log(response.data);
             });
