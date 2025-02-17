@@ -1,0 +1,74 @@
+.startSimulationButton {
+    background-color: var(--rs-btn-default-bg);
+    border: var(--rs-btn-default-border, none);
+    border-radius: 6px;
+    cursor: pointer;
+    right: calc(20px + 400px);
+    font-size: 14px;
+    font-weight: 400;
+    justify-content: center;
+    line-height: 20px;
+    margin-bottom: 0;
+    overflow: hidden;
+    padding: 8px 12px;
+  }
+  
+  .startSimulationButton:hover {
+    background-color: var(--rs-btn-default-hover-bg);
+    color: var(--rs-btn-default-hover-text);
+  }
+
+  .editButton {
+    background-color: var(--rs-btn-default-bg);
+    border: var(--rs-btn-default-border, none);
+    border-radius: 6px;
+    cursor: pointer;
+    right: calc(20px + 400px);
+    font-size: 14px;
+    font-weight: 400;
+    justify-content: center;
+    line-height: 20px;
+    margin-bottom: 0;
+    overflow: hidden;
+    padding: 8px 12px;
+  }
+  
+  .editButton:hover {
+    background-color: var(--rs-btn-default-hover-bg);
+    color: var(--rs-btn-default-hover-text);
+  }
+  
+  /*Start simulation Modal*/
+  .modalFooter {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 20px;
+}
+
+.cancelButton, .okButton {
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.cancelButton {
+  background-color: #929292;
+  color: white;
+}
+
+.cancelButton:hover{
+  background-color: #6e6e6e;
+}
+
+.okButton {
+  background-color: white !important; /* Sfondo bianco */
+  border: 2px solid #6e6e6e !important; /* Bordo grigio */
+  color: #6e6e6e !important; /* Testo grigio */
+  cursor: pointer;
+  transition: all 0.2s ease-in-out; /* Effetto al passaggio del mouse */
+}
+
+.okButton:hover {
+  background-color: #f0f0f0 !important;
+}

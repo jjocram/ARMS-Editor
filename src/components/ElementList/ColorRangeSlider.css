@@ -1,69 +1,61 @@
 .color-range-slider {
     display: flex;
     flex-direction: column;
-    gap: 20px;
-    padding: 20px;
-    border: 1px solid #ddd;
-    border-radius: 5px;
+    gap: 15px;
+    padding: 10px;
 }
 
 .slider-row {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 15px;
 }
 
-.slider-row label {
-    flex: 1;
-    font-weight: bold;
-    color: #555;
-} 
-
-.slider-container {
-    flex: 2;
-    position: relative;
-    height: 8px;
-    background: #ddd;
-    border-radius: 5px;
-}
-
-.slider-thumb {
-    position: absolute;
-    width: 100%;
-    appearance: none;
-    background: transparent;
-    height: 8px;
-    outline: none;
-}
-
-.slider-thumb::-webkit-slider-thumb {
-    appearance: none;
-    width: 16px;
-    height: 16px;
-    background: #007bff;
-    border-radius: 50%;
-    cursor: pointer;
-}
-
-.slider-thumb::-moz-range-thumb {
-    width: 16px;
-    height: 16px;
-    background: #007bff;
-    border-radius: 50%;
-    cursor: pointer;
-}
-
-.slider-thumb::-ms-thumb {
-    width: 16px;
-    height: 16px;
-    background: #007bff;
-    border-radius: 50%;
-    cursor: pointer;
-}
-
-.slider-row span {
-    flex: 1;
-    text-align: right;
-    color: #333;
+.slider-label {
+    width: 120px;
     font-weight: bold;
 }
+
+.rs-slider {
+    flex-grow: 1;
+}
+
+span {
+    min-width: 60px;
+    text-align: center;
+}
+
+/* Availability Slider */
+.color-range-slider .availability-slider .rs-slider-bar {
+    background: linear-gradient(to right,
+        rgba(255, 0, 0, 0.5) 0%, 
+        rgba(255, 0, 0, 0.5) var(--availability-left), 
+        rgba(0, 128, 0, 0.5) var(--availability-right), 
+        rgba(0, 128, 0, 0.5) 100%) !important;
+}
+
+/* Queue Length Slider */
+.color-range-slider .queue-length-slider .rs-slider-bar {
+    background: linear-gradient(to right,
+        rgba(255, 0, 0, 0.5) 0%, 
+        rgba(255, 0, 0, 0.5) var(--queue-left), 
+        rgba(0, 128, 0, 0.5) var(--queue-right), 
+        rgba(0, 128, 0, 0.5) 100%) !important;
+}
+
+
+
+/* Rimuove completamente il blu di default di rsuite */
+.color-range-slider .rs-slider-progress {
+    background: none !important;
+}
+
+.rs-slider-progress-bar {
+    background-color: yellow !important; /* Cambia il colore da blu a giallo */
+}
+
+/* Cambia il colore del bordo dei pallini */
+.rs-slider-handle:before{
+    border: 2px solid #6e6e6e !important; /* Imposta il bordo grigio */
+}
+

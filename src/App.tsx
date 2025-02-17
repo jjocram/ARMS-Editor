@@ -5,9 +5,7 @@ import {useEffect, useRef, useState} from "react";
 import {ModelerContext, ModelerRefContext} from "./ModelerContext.ts";
 
 import MenuBar from "./components/MenuBar/MenuBar.tsx";
-
 import customModdleExtension from "./customModel/factoryModel.json"
-
 import bpmnExtension from './BPMNExtensions';
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -32,9 +30,6 @@ import PieChart from './components/ElementList/PieChart.tsx';
 import BarChart from './components/ElementList/BarChart.tsx';
 
 import Modal from "react-modal";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faPencilAlt } from "@fortawesome/free-solid-svg-icons";
-
 import ColorRangeSlider from './components/ElementList/ColorRangeSlider.tsx';
 
 Modal.setAppElement("#root");
@@ -50,14 +45,16 @@ function App() {
     const [isDrawerOpen, setDrawerOpen] = useState(false);
     const [selectedElement, setSelectedElement] = useState<Shape | null>(null);
     
-    const [jsonData, setJsonData] = useState<any | null>(null); 
+    //const [jsonData, setJsonData] = useState<any | null>(null); 
+    const [data, setData] = useState<any | null>(null); 
 
-    const [selectedMetric, setSelectedMetric] = useState<'busy' | 'idle'>('busy');  
+    const [selectedMetric, setSelectedMetric] = useState<'Availability' | 'QueueLength'>('Availability');  
 
     const [selectedExecutor, setSelectedExecutor] = useState<Executor | null>(null); // Esecutore selezionato
     const [selectedActivity, setSelectedActivity] = useState<Activity | null>(null); // Attività selezionata
     //const [pieChartData, setPieChartData] = useState<{ id: string; value: number }[]>([]); // Dati per grafico a torta
     const [activeChart, setActiveChart] = useState<'pie' | 'd3'>('d3'); // Tipo di grafico attivo
+    const [elementNames, setElementNames] = useState<Map<string, string>>(new Map());
 
     const [isModalOpen, setModalOpen] = useState(false);
     const openModal = () => setModalOpen(true);
@@ -101,6 +98,7 @@ function App() {
 
     interface Activity {
         id: string;
+        name: string;
         busy: number;
         busyUnit: TimeUnit;  
         maxWaitTimeInQueue: number;
@@ -111,6 +109,7 @@ function App() {
 
     interface Executor {
         id: string;
+        name: string;
         idle: number;
         sumWaitTimeInQueue: number;
         busy: number; // Tempo totale di busy dell'esecutore
@@ -216,7 +215,21 @@ function App() {
                     .flatMap((element: Shape) => element)
                     .flatMap((element: Shape) => new AccessoryCompatibility(element.id, element.quantity));
             })
+
+            const namesMap = new Map<string, string>();
+
+            // Estrai nomi da tutti gli elementi BPMN
+            const allElements = elementRegistry.getAll();
+            allElements.forEach(element => {
+                if (element.businessObject && element.businessObject.name) {
+                    namesMap.set(element.id, element.businessObject.name);
+                }
+            });
+
+            // Aggiorna lo stato con la mappa degli ID → Nomi
+            setElementNames(namesMap);
         }
+
     }
 
     function setXmlDiagramToEmpty() {
@@ -226,7 +239,7 @@ function App() {
             .catch(err => console.error(err));
     }
 
-    // Caricamento del file JSON
+    /*Caricamento del file JSON
     const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
         if (!file) return;
@@ -236,21 +249,49 @@ function App() {
         try {
             const data = JSON.parse(e.target?.result as string);
             console.log("JSON caricato:", data);
-            setJsonData(data);
+            setData(data);
         } catch (error) {
             console.error("Errore durante la lettura del JSON:", error);
             alert("Il file selezionato non è un JSON valido.");
         }
         };
         reader.readAsText(file);
+    };*/
+
+    const [simulationPercentages, setSimulationPercentages] = useState<Map<string, { Availability: number, QueueLength: number }>>(new Map());
+    const [simulationStarted, setSimulationStarted] = useState(false);
+
+    const handleRangeChange = (ranges: any) => {
+        if (Array.isArray(ranges.availability) && ranges.availability.length === 2 &&
+            Array.isArray(ranges.queueLength) && ranges.queueLength.length === 2) {
+            
+            // Forza come tuple prima di salvare
+            const fixedRanges = {
+                availability: [ranges.availability[0], ranges.availability[1]] as [number, number],
+                queueLength: [ranges.queueLength[0], ranges.queueLength[1]] as [number, number]
+            };
+    
+            localStorage.setItem('colorThresholds', JSON.stringify(fixedRanges));
+        } else {
+            console.error("Formato errato in handleRangeChange:", ranges);
+        }
+        updateExecutorColors();
+    };
+    
+
+    const updateExecutorColors = () => {
+        if (data?.executors) {
+            data.executors.forEach((executor: Executor) => {
+                const busyValue = calculateBusyValueForExecutor(executor);
+                const colorClass = getColorClass(busyValue, selectedMetric);
+                changeElementClass(executor.id, colorClass);
+            });
+        }
     };
 
-    const [simulationPercentages, setSimulationPercentages] = useState<Map<string, { busy: number, idle: number }>>(new Map());
-    const [simulationStarted, setSimulationStarted] = useState(false);
-    
     const calculateBusyValueForExecutor = (executor: Executor): number => {
-        const totalBusyTime = executor.busy; // Tempo totale busy fornito
-        const totalQueueTime = executor.sumWaitTimeInQueue || 0; // Tempo totale in coda fornito
+        const totalBusyTime = executor.busy;
+        const totalQueueTime = executor.sumWaitTimeInQueue || 0;
     
         const totalTime = totalBusyTime + totalQueueTime;
     
@@ -259,79 +300,56 @@ function App() {
             return 0;
         }
     
-        // Formula per il calcolo del valore busy
+        //formula calcolo valore di busy
         const value = totalBusyTime / totalTime;
         console.log(`Executor ${executor.id}: busy value = ${value}`);
         return value; // Valore tra 0 e 1
     };
     
-    const getColorClass = (value: number, selectedMetric: string) => {
+    const getColorClass = (value: number, selectedMetric: string): string => {
+        // Recupera i threshold dal localStorage, con un fallback ai valori predefiniti
+        const storedThresholds = localStorage.getItem('colorThresholds');
+        let thresholds: { availability: [number, number]; queueLength: [number, number] };
+    
+        try {
+            const parsedThresholds = storedThresholds ? JSON.parse(storedThresholds) : {};
+    
+            // Converti e forzare come tuple `[number, number]`
+            const availability: [number, number] = Array.isArray(parsedThresholds.availability) && parsedThresholds.availability.length === 2
+                ? [parsedThresholds.availability[0], parsedThresholds.availability[1]] as [number, number]
+                : [0.5, 0.75];
+    
+            const queueLength: [number, number] = Array.isArray(parsedThresholds.queueLength) && parsedThresholds.queueLength.length === 2
+                ? [parsedThresholds.queueLength[0], parsedThresholds.queueLength[1]] as [number, number]
+                : [0.3, 0.6];
+    
+            thresholds = { availability, queueLength };
+        } catch (error) {
+            console.error("Errore nel parsing del localStorage:", error);
+            thresholds = { availability: [0.5, 0.75], queueLength: [0.3, 0.6] };
+        }
+    
+        console.log("Using thresholds:", thresholds);
+    
         if (value === 0) {
-            return ''; // Nessuna classe
+            return '';
         }
-        if (selectedMetric === 'busy') {
-            if (value > 0.75) {
-                return 'bpmn-element-green'; // Verde
-            } else if (value >= 0.51 && value <= 0.74) {
-                return 'bpmn-element-yellow'; // Giallo
-            } else {
-                return 'bpmn-element-red'; // Rosso
-            }
-        } else { // Metrica 'idle'
-            if (value <= 0.05) {
-                return 'bpmn-element-green'; // Verde
-            } else if (value <= 0.25) {
-                return 'bpmn-element-yellow'; // Giallo
-            } else {
-                return 'bpmn-element-red'; // Rosso
-            }
-        }
-    };
     
-    const startSimulation = () => {
-        if (jsonData) {
-            console.log("Simulazione avviata con dati:", jsonData);
+        // Determina i range in base alla metrica selezionata
+        const [yellowThreshold, greenThreshold] = selectedMetric === 'Availability' 
+            ? thresholds.availability 
+            : thresholds.queueLength;
     
-            const executors: Executor[] = jsonData.executors;
-    
-            const updatedPercentages: Map<string, { busy: number; idle: number }> = new Map();
-    
-            executors.forEach((executor: Executor) => {
-                let busyValue = 0;
-                let idleValue = 0;
-    
-                if (selectedMetric === 'busy') {
-                    // Calcola il valore di busy con la nuova formula
-                    busyValue = calculateBusyValueForExecutor(executor);
-                } else {
-                    // Calcola il valore di idle
-                    const simulationTotalTime = jsonData.simulation.totalTime || 1;
-                    idleValue = executor.idle / simulationTotalTime;
-                }
-    
-                // Aggiungi i valori alla mappa mantenendo entrambe le proprietà
-                updatedPercentages.set(executor.id, {
-                    busy: busyValue,
-                    idle: idleValue,
-                });
-    
-                // Determina la classe del colore in base alla metrica selezionata
-                const value = selectedMetric === 'busy' ? busyValue : idleValue;
-                const colorClass = getColorClass(value, selectedMetric);
-                changeElementClass(executor.id, colorClass);
-            });
-    
-            // Aggiorna lo stato con i nuovi valori
-            setSimulationPercentages(updatedPercentages);
-            setRealTime(jsonData.simulation.totalTime);
-            setIdealTime(calculateIdealTime(jsonData.executors));
-            setSimulationStarted(true);
+        // Applica i colori in base ai valori
+        if (value > greenThreshold) {
+            return 'bpmn-element-green';
+        } else if (value >= yellowThreshold) {
+            return 'bpmn-element-yellow';
         } else {
-            alert("Carica un file JSON prima di avviare la simulazione.");
+            return 'bpmn-element-red';
         }
-    };
-    
-    
+    };        
+
     // Funzione per cambiare la classe CSS di un elemento nel diagramma utilizzando l'ID
     const changeElementClass = (elementId: string, colorClass: string) => {
         const elementRegistry = modelerRef.current?.get("elementRegistry");
@@ -353,6 +371,65 @@ function App() {
         }
     };
 
+    const startSimulation = async () => {
+        try{
+            const diagram = await modelerRef.current?.saveXML();
+
+        const response = await fetch("http://127.0.0.1:8080/simulate", {
+        method: "POST",
+        body: diagram?.xml,
+        });
+
+        const newData = await response.json();
+        setData(newData);
+
+        if (newData) {
+            console.log(modelerRef.current?.saveXML().then(response => console.log(response)));
+
+            console.log("Simulazione avviata con dati:", newData);
+    
+            const executors: Executor[] = newData.executors;
+    
+            const updatedPercentages: Map<string, { Availability: number; QueueLength: number }> = new Map();
+    
+            executors.forEach((executor: Executor) => {
+                let busyValue = 0;
+                let idleValue = 0;
+    
+                if (selectedMetric === 'Availability') {
+                    // Calcola il valore di busy
+                    busyValue = calculateBusyValueForExecutor(executor);
+                } else {
+                    // Calcola il valore di idle
+                    const simulationTotalTime = newData.simulation.totalTime || 1;
+                    idleValue = executor.idle / simulationTotalTime;
+                }
+    
+                // Aggiungi i valori alla mappa mantenendo entrambe le proprietà
+                updatedPercentages.set(executor.id, {
+                    Availability: busyValue,
+                    QueueLength: idleValue,
+                });
+    
+                // Determina la classe del colore in base alla metrica selezionata
+                const value = selectedMetric === 'Availability' ? busyValue : idleValue;
+                const colorClass = getColorClass(value, selectedMetric);
+                changeElementClass(executor.id, colorClass);
+            });
+    
+            // Aggiorna lo stato con i nuovi valori
+            setSimulationPercentages(updatedPercentages);
+            setRealTime(newData.simulation.totalTime);
+            setIdealTime(calculateIdealTime(newData.executors));
+            setSimulationStarted(true);
+        } else {
+            alert("Carica un file JSON prima di avviare la simulazione.");
+        }
+    }catch{
+        console.log("errore")
+    }
+    };
+        
     //Grafico generale dei tempi
     const [idealTime, setIdealTime] = useState(0);
     const [realTime, setRealTime] = useState(0);
@@ -399,10 +476,11 @@ function App() {
 
     const [executorChartData, setExecutorChartData] = useState<{ id: string; value: number }[]>([]);
     const [activityChartData, setActivityChartData] = useState<{ id: string; value: number }[]>([]);
+    const [producedItemsChartData, setProducedItemsChartData] = useState<{ id: string; value: number }[]>([]);
 
 
     useEffect(() => {
-        if (!simulationStarted || !jsonData || !modelerRef.current) {
+        if (!simulationStarted || !data || !modelerRef.current) {
             console.log("Simulation not started or data not available.");
             return;
         }
@@ -422,69 +500,71 @@ function App() {
         const handleElementClick = (event: any) => {
             const element = event.element;
         
-            // Controlla se l'elemento ha un ID valido
             if (!element || !element.id) {
-                console.log("Nessun elemento trovato o l'elemento non ha un ID.");
-                setActiveChart('d3'); // Torna al grafico D3 di default
+                setActiveChart('d3');
                 setSelectedExecutor(null);
                 setSelectedActivity(null);
+                setProducedItemsChartData([]);
                 return;
             }
         
             console.log("Elemento selezionato con ID:", element.id);
         
-            // Cerca se l'elemento è un esecutore
-            const executor = jsonData.executors.find((exec: Executor) => exec.id === element.id);
+            const executor = data.executors.find((exec: Executor) => exec.id === element.id);
         
-            // Cerca se l'elemento è un'attività (analizza tutte le attività degli esecutori)
-            const activity = jsonData.executors
-                .flatMap((exec: Executor) => exec.activities) // Estrae tutte le attività
-                .find((act: Activity) => act.id === element.id); // Cerca quella selezionata
+            const activity = data.executors
+                .flatMap((exec: Executor) => exec.activities)
+                .find((act: Activity) => act.id === element.id);
         
-            // Se è un esecutore
             if (executor) {
-                console.log("Esecutore trovato:", executor.id);
                 setSelectedExecutor(executor);
         
-                // Prepara i dati per il grafico delle attività svolte dall'esecutore
-                setExecutorChartData(executor.activities.map( (activity:Activity) => ({
+                setExecutorChartData(executor.activities.map((activity: Activity) => ({
                     id: activity.id,
                     value: activity.busy
                 })));
         
-                setActiveChart('pie'); // Mostra grafico a torta
-                setSelectedActivity(null); // Resetta attività
-            } 
-            // Se è un'attività
-            else if (activity) {
-                console.log("Attività trovata:", activity.id);
+                setActiveChart('pie');
+                setSelectedActivity(null);
+                setProducedItemsChartData([]);
+            } else if (activity) {
                 setSelectedActivity(activity);
         
-                // Prepara i dati per il grafico degli esecutori coinvolti in quell'attività
-                const executors = jsonData.executors.filter((exec: Executor) =>
+                // Primo grafico: esecutori coinvolti con tempo busy
+                const executors = data.executors.filter((exec: Executor) =>
                     exec.activities.some((act: Activity) => act.id === activity.id)
                 );
         
                 const activityChartData = executors.map((exec: Executor) => {
                     const execActivity = exec.activities.find((act: Activity) => act.id === activity.id);
                     return {
-                        id: exec.id, // ID dell'esecutore
-                        value: execActivity ? execActivity.busy : 0 // Tempo occupato
+                        id: exec.id,
+                        value: execActivity ? execActivity.busy : 0
                     };
                 });
         
                 setActivityChartData(activityChartData);
-                setActiveChart('pie'); // Mostra grafico a torta
-                setSelectedExecutor(null); // Resetta esecutore
-            } 
-            // Se non è né un esecutore né un'attività
-            else {
-                console.log("Nessuna corrispondenza trovata.");
-                setActiveChart('d3'); // Torna al grafico D3 di default
+        
+                // Secondo grafico: numero di oggetti prodotti per attività per esecutore
+                const producedItemsData = executors.map((exec: Executor) => {
+                    const execActivity = exec.activities.find((act: Activity) => act.id === activity.id);
+                    return {
+                        id: exec.id,
+                        value: execActivity ? execActivity.processedItems : 0
+                    };
+                });
+        
+                setProducedItemsChartData(producedItemsData);
+                setActiveChart('pie');
+                setSelectedExecutor(null);
+            } else {
+                setActiveChart('d3');
                 setSelectedExecutor(null);
                 setSelectedActivity(null);
+                setProducedItemsChartData([]);
             }
         };
+        
     
         // Ascolta gli eventi di clic sugli elementi BPMN
         eventBus.on("element.click", handleElementClick);
@@ -493,18 +573,40 @@ function App() {
             console.log("Removing BPMN.js click event listener.");
             eventBus.off("element.click", handleElementClick);
         };
-    }, [simulationStarted, jsonData, modelerRef]);
+    }, [simulationStarted, data, modelerRef]);
 
     useEffect(() => {
-        console.log("jsonData attuale:", jsonData);
-    }, [jsonData]);
+        console.log("jsonData attuale:", data);
+    }, [data]);
           
     useEffect(() => {
         initializeModeler();
         setXmlDiagramToEmpty();
     }, []);
 
-    // Funzione helper per convertire il tempo in minuti
+    useEffect(() => {
+        if (!data || !selectedActivity) {
+            setProducedItemsChartData([]);
+            return;
+        }
+    
+        const executors = data.executors.filter((exec: Executor) =>
+            exec.activities.some((act: Activity) => act.id === selectedActivity.id)
+        );
+    
+        const producedItemsData = executors.map((exec: Executor) => {
+            const execActivity = exec.activities.find((act: Activity) => act.id === selectedActivity.id);
+            return {
+                id: exec.id,
+                name: `Executor ${exec.id}`,
+                busy: execActivity ? execActivity.processedItems : 0
+            };
+        });
+    
+        setProducedItemsChartData(producedItemsData);
+    }, [selectedActivity, data]);
+
+    /* Funzione helper per convertire il tempo in minuti
     const convertToMinutes = (time: number, unit: TimeUnit): number => {
         switch (unit) {
             case 's': return time / 60;   // Converti secondi in minuti
@@ -513,7 +615,7 @@ function App() {
             case 'd': return time * 1440; // Converti giorni in minuti
             default: return time;         // Gestire il caso di default come non necessario
         }
-    };
+    }; */
 
     // Funzione per ottenere i dati combinati per una singola attività
     const getBarChartDataForActivity = (activity: Activity): { 
@@ -543,7 +645,7 @@ function App() {
     
         return {
             id: activity.id,
-            busyPerProduct: busyPerProduct,  // Nuovo dato
+            busyPerProduct: busyPerProduct,  
             average: averageTime,
             max: maxTime
         };
@@ -560,72 +662,114 @@ function App() {
         );
     };
 
-    const [colorRanges] = useState({
-        green: 0.75, // Valore iniziale per il verde
-        yellow: 0.5, // Valore iniziale per il giallo
+    const [colorRanges, setColorRanges] = useState({
+        availability: [0.5, 0.75],
+        queueLength: [0.3, 0.6],
     });
 
-    const handleRangeChange = (ranges: { green: number; yellow: number; red: number }) => {
-        console.log("Nuovi range:", ranges);
-    };
-
+    const getProcessedItemsByExecutors = (activityId: string) => {
+        if (!data || !data.executors) return [];
+    
+        return data.executors
+            .map((exec: Executor) => {
+                const activity = exec.activities.find(act => act.id === activityId);
+                return activity
+                    ? { 
+                        id: exec.id, 
+                        name: `Executor ${exec.id}`, 
+                        busy: 0, // Manteniamo il campo per evitare errori TypeScript
+                        processedItems: activity.processedItems ?? 0 
+                    }
+                    : null;
+            })
+            .filter((exec: Executor) => exec !== null && exec.processedItems > 0); // Rimuove esecutori senza prodotti
+    };    
+    
+    
     return (
         <div className="App">
         <ModelerRefContext.Provider value={modelerContext}>
-            <MenuBar setXmlDiagramToEmpty={() => {}} setSelectedMetric={setSelectedMetric} />
-                <div style={{ position: 'absolute', top: 10, right: '20px', zIndex: 10 }}>
-                    {simulationStarted && (
-                        <button onClick={openModal} className="editButton" title="Modifica Simulazione" style={{ position: 'absolute', top: '50px', right: '350px', zIndex: 10, }}>
-                            <FontAwesomeIcon icon={faPencilAlt} />
-                        </button>
-                    )}
-                </div>
-            <div className="simulationControls">
-                <input type="file" accept=".json" onChange={handleFileChange} className="fileInput"/>
-                <button onClick={startSimulation} className="startSimulationButton">Avvia Simulazione</button>
-                
-            </div>
+            <MenuBar setXmlDiagramToEmpty={() => {}} setSelectedMetric={setSelectedMetric} startSimulation={startSimulation} simulationStarted={simulationStarted} openModal={openModal} />
+            
             <Modal
                 isOpen={isModalOpen}
                 onRequestClose={closeModal}
-                contentLabel="Modifica Simulazione"
-                style={{overlay: { backgroundColor: "rgba(0, 0, 0, 0.5)" },
-                    content: {width: "400px", height: "300px", margin: "auto", padding: "20px", borderRadius: "10px",},
+                contentLabel="Modifica Parametri Visualizzazione"
+                style={{
+                    overlay: { backgroundColor: "rgba(0, 0, 0, 0.5)" },
+                    content: { width: "450px", height: "250px", margin: "auto", padding: "20px", borderRadius: "10px" },
                 }}
             >
-                <h4>Modifica Parametri della Simulazione</h4>
-                <ColorRangeSlider initialValues={colorRanges} onChange={handleRangeChange} />
+                <h4>Modifica Parametri Visualizzazione</h4>
+
+                {/* Aggiornato per supportare Availability e Queue Length */}
+                <ColorRangeSlider 
+                    initialValues={colorRanges} 
+                    onChange={(newRanges) => {
+                        setColorRanges(newRanges); // Aggiorniamo lo stato con i nuovi valori
+                        localStorage.setItem("colorThresholds", JSON.stringify(newRanges)); // Salviamo nel localStorage
+                    }} 
+                />
+
                 <div className="modalFooter">
-                    <button onClick={closeModal} className="closeButton">
-                        Chiudi
-                    </button>
-                    <button className="saveButton">Salva Modifiche</button>
+                    <button onClick={closeModal} className="closeButton">Chiudi</button>
                 </div>
             </Modal>
+
             <div className="layoutContainer">
             <div id="diagramContainer" className="diagramContainer"></div>
             {simulationStarted && (
                 <div className="sidePanel">
                     {activeChart === 'pie' && selectedActivity && (
-                        <PieChart activities={activityChartData.map(item => ({
-                            id: item.id,
-                            busy: item.value
-                        }))} />
-                    )}
+                    <>
+                        {/* Grafico a torta degli esecutori coinvolti nell'attività */}
+                        <PieChart 
+                            activities={activityChartData.map(item => ({
+                                id: item.id,
+                                name: elementNames.get(item.id) || `Esecutore ${item.id}`,
+                                busy: item.value // Per il primo grafico
+                            }))} 
+                            chartType="activity" 
+                        />
+                        {/* Grafico a torta per gli oggetti processati da ogni esecutore */}
+                        <PieChart 
+                            activities={getProcessedItemsByExecutors(selectedActivity.id)}
+                            chartType="processedItems"
+                        />
+                    </>
+                )}
+
+
                     {/* Grafico a Torta per l'Esecutore Selezionato */}
                     {activeChart === 'pie' && selectedExecutor && (
-                        <>
-                            <PieChart activities={selectedExecutor.activities} />
-                            {selectedExecutor.activities.map(activity => {
-                                const chartData = getBarChartDataForActivity(activity);
-                                const executorMax = getExecutorMax(selectedExecutor);
+                    <>
+                        {/* Passiamo i nomi corretti a PieChart */}
+                        <PieChart 
+                            activities={selectedExecutor.activities.map(activity => ({
+                                id: activity.id,
+                                name: elementNames.get(activity.id) || `Activity ${activity.id}`, // Recupera il nome o usa un fallback
+                                busy: activity.busy
+                            }))} 
+                            chartType="executor" 
+                        />
 
-                                return chartData ? (
-                                    <BarChart key={activity.id} title={`Activity ${activity.id}`} data={[chartData]} globalMax={executorMax}/>
-                                ) : null;
-                            })}
-                        </>
-                    )}
+                        {/* Generiamo il BarChart per ogni attività */}
+                        {selectedExecutor.activities.map(activity => {
+                            const chartData = getBarChartDataForActivity(activity);
+                            const executorMax = getExecutorMax(selectedExecutor);
+
+                            return chartData ? (
+                                <BarChart 
+                                    key={activity.id} 
+                                    title={`Activity ${elementNames.get(activity.id) || activity.id}`} // Mostriamo il nome corretto
+                                    data={[chartData]} 
+                                    globalMax={executorMax}
+                                />
+                            ) : null;
+                        })}
+                    </>
+                )}
+
 
                     {/* Grafico D3 Generale */}
                     {activeChart === 'd3' && (
@@ -633,7 +777,7 @@ function App() {
                     )}
 
                     {/* Applica le classi CSS dinamiche agli esecutori nel diagramma */}
-                    {jsonData.executors.forEach((executor: Executor) => {
+                    {data.executors.forEach((executor: Executor) => {
                         const elementRegistry = modelerRef.current?.get("elementRegistry");
                         const element = elementRegistry?.get(executor.id) as Shape | undefined;
 

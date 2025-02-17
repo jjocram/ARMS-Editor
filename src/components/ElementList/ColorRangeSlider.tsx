@@ -1,83 +1,90 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { RangeSlider } from "rsuite";
+import "rsuite/dist/rsuite.min.css";
 import "./ColorRangeSlider.css";
 
 interface ColorRangeSliderProps {
     initialValues: {
-        green: number;
-        yellow: number;
+        availability: [number, number];
+        queueLength: [number, number];
     };
     onChange: (ranges: {
-        green: number;
-        yellow: number;
-        red: number;
+        availability: [number, number];
+        queueLength: [number, number];
     }) => void;
 }
 
 const ColorRangeSlider: React.FC<ColorRangeSliderProps> = ({ initialValues, onChange }) => {
     const [values, setValues] = useState(initialValues);
 
-    const handleValueChange = (color: keyof typeof values, newValue: number) => {
-        const updatedValues = { ...values, [color]: newValue };
-
-        // Imposta i vincoli per i valori
-        if (color === "green" && updatedValues.green < updatedValues.yellow) {
-            updatedValues.green = updatedValues.yellow;
+    useEffect(() => {
+        const savedValues = localStorage.getItem("colorThresholds");
+        if (savedValues) {
+            setValues(JSON.parse(savedValues));
         }
+    }, []);
 
-        if (color === "yellow" && updatedValues.yellow > updatedValues.green) {
-            updatedValues.yellow = updatedValues.green;
+    useEffect(() => {
+        // Imposta le variabili CSS per Availability
+        document.documentElement.style.setProperty("--availability-left", `${values.availability[0] * 100}%`);
+        document.documentElement.style.setProperty("--availability-right", `${values.availability[1] * 100}%`);
+    
+        // Imposta le variabili CSS per Queue Length
+        document.documentElement.style.setProperty("--queue-left", `${values.queueLength[0] * 100}%`);
+        document.documentElement.style.setProperty("--queue-right", `${values.queueLength[1] * 100}%`);
+    }, [values]);
+    
+
+    const handleValueChange = (metric: "availability" | "queueLength", newValue: [number, number]) => {
+        // Impedisce che il pallino sinistro superi quello destro
+        if (newValue[0] >= newValue[1]) {
+            return;
         }
-
+    
+        const updatedValues = { ...values, [metric]: newValue };
         setValues(updatedValues);
-
-        // Calcola il range del rosso
-        const ranges = {
-            green: updatedValues.green,
-            yellow: updatedValues.yellow,
-            red: 0, // I valori sotto il giallo saranno rossi
-        };
-
-        onChange(ranges);
+        localStorage.setItem("colorThresholds", JSON.stringify(updatedValues));
+        onChange(updatedValues);
+    
+        // Aggiorna le variabili CSS per il range selezionato
+        if (metric === "availability") {
+            document.documentElement.style.setProperty("--availability-left", `${newValue[0] * 100}%`);
+            document.documentElement.style.setProperty("--availability-right", `${newValue[1] * 100}%`);
+        } else {
+            document.documentElement.style.setProperty("--queue-left", `${newValue[0] * 100}%`);
+            document.documentElement.style.setProperty("--queue-right", `${newValue[1] * 100}%`);
+        }
     };
 
     return (
         <div className="color-range-slider">
-            {/* Verde */}
-            <div className="slider-row">
-                <label>Verde:</label>
-                <div className="slider-container">
-                    <input
-                        type="range"
-                        min={0}
-                        max={1}
-                        step={0.01}
-                        value={values.green}
-                        onChange={(e) =>
-                            handleValueChange("green", parseFloat(e.target.value))
-                        }
-                        className="slider-thumb"
-                    />
-                </div>
-                <span>{values.green.toFixed(2)}</span>
+            {/* Slider per Availability */}
+            <div className="slider-row availability-slider">
+                <label className="slider-label">Availability</label>
+                <RangeSlider
+                    value={values.availability}  // Mantiene il valore controllato
+                    min={0}
+                    max={1}
+                    step={0.01}
+                    progress
+                    onChange={(value) => handleValueChange("availability", value as [number, number])}
+                />
+
+                <span>{`${values.availability[0].toFixed(2)} - ${values.availability[1].toFixed(2)}`}</span>
             </div>
 
-            {/* Giallo */}
-            <div className="slider-row">
-                <label>Giallo:</label>
-                <div className="slider-container">
-                    <input
-                        type="range"
-                        min={0}
-                        max={1}
-                        step={0.01}
-                        value={values.yellow}
-                        onChange={(e) =>
-                            handleValueChange("yellow", parseFloat(e.target.value))
-                        }
-                        className="slider-thumb"
-                    />
-                </div>
-                <span>{values.yellow.toFixed(2)}</span>
+            {/* Slider per Queue Length */}
+            <div className="slider-row queue-length-slider">
+                <label className="slider-label">Queue Length</label>
+                <RangeSlider
+                    value={values.queueLength}
+                    min={0}
+                    max={1}
+                    step={0.01}
+                    progress
+                    onChange={(value) => handleValueChange("queueLength", value as [number, number])}
+                />
+                <span>{`${values.queueLength[0].toFixed(2)} - ${values.queueLength[1].toFixed(2)}`}</span>
             </div>
         </div>
     );

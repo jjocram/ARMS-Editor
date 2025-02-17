@@ -64,25 +64,6 @@
 }
 
 /*PANNELLO MODIFICHE SIMULAZIONE*/
-.editButton {
-  background-color: var(--rs-btn-default-bg);
-  border: var(--rs-btn-default-border, none);
-  border-radius: 6px;
-  cursor: pointer;
-  right: calc(20px + 400px);
-  font-size: 14px;
-  font-weight: 400;
-  justify-content: center;
-  line-height: 20px;
-  margin-bottom: 0;
-  overflow: hidden;
-  padding: 8px 12px;
-}
-
-.editButton:hover {
-  background-color: var(--rs-btn-default-hover-bg);
-  color: var(--rs-btn-default-hover-text);
-}
 
 .modalContent label {
   display: block;

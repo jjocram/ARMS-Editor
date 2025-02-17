@@ -32,7 +32,7 @@ interface PropertiesDrawerProps {
     shape: Shape | null,
     isOpen: boolean,
     setIsOpen: (isOpen: boolean) => void,
-    simulationPercentages: Map<string, { busy: number, idle: number }>;
+    simulationPercentages: Map<string, { Availability: number, QueueLength: number }>;
 }
 
 function PropertiesDrawer({shape, isOpen, setIsOpen, simulationPercentages}: PropertiesDrawerProps) {
@@ -278,11 +278,11 @@ function PropertiesDrawer({shape, isOpen, setIsOpen, simulationPercentages}: Pro
                     <Stack spacing={10} direction="column" alignItems="flex-start">
                         <InputGroup>
                             <InputGroup.Addon>Busy Time</InputGroup.Addon>
-                            <InputNumber value={executorSimulationData.busy} readOnly />
+                            <InputNumber value={executorSimulationData.Availability} readOnly />
                         </InputGroup>
                         <InputGroup>
                             <InputGroup.Addon>Idle Time</InputGroup.Addon>
-                            <InputNumber value={executorSimulationData.idle} readOnly />
+                            <InputNumber value={executorSimulationData.QueueLength} readOnly />
                         </InputGroup>
                     </Stack>
                 </Accordion.Panel>
