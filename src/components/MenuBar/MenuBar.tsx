@@ -114,11 +114,11 @@ export default function MenuBar({setXmlDiagramToEmpty, setSelectedMetric, startS
                 contentLabel="Conferma Avvio Simulazione"
                 style={{
                     overlay: { backgroundColor: "rgba(0, 0, 0, 0.5)" },
-                    content: { width: "400px", height: "250px", margin: "auto", padding: "20px", borderRadius: "10px", textAlign: "center" },
+                    content: { width: "30%", height: "160px", margin: "auto", padding: "20px", borderRadius: "10px", textAlign: "center" },
                 }}
             >
-                <h4>Avvia la simulazione con i parametri attuali</h4>
-                <p>Per modificarli vai nel menu <b>"Simulation"</b></p>
+                <h4>Start simulation with current parameters</h4>
+                <p>To change them go to menu <b>"Simulation"</b></p>
 
                 {loading ? (
                     <FontAwesomeIcon icon={faSpinner} spin size="2x" style={{ margin: "20px 0" }} />

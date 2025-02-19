@@ -31,11 +31,17 @@ import BarChart from './components/ElementList/BarChart.tsx';
 
 import Modal from "react-modal";
 import ColorRangeSlider from './components/ElementList/ColorRangeSlider.tsx';
+import { ActivityElement } from './Models/ActivityElement.ts';
 
 Modal.setAppElement("#root");
 interface ElementEvent {
     element: Shape,
     stopPropagation: () => void,
+}
+interface ElementDeleteEvent {
+    context: {
+        shape: Shape
+    }
 }
 
 function App() {
@@ -47,7 +53,6 @@ function App() {
     
     //const [jsonData, setJsonData] = useState<any | null>(null); 
     const [data, setData] = useState<any | null>(null); 
-
     const [selectedMetric, setSelectedMetric] = useState<'Availability' | 'QueueLength'>('Availability');  
 
     const [selectedExecutor, setSelectedExecutor] = useState<Executor | null>(null); // Esecutore selezionato
@@ -83,6 +88,7 @@ function App() {
             modelerRef.current.on('import.done', setupModelData);
             modelerRef.current.on('element.changed', updateModelerContext);
             // console.log(modelerRef.current.get("eventBus"));
+            modelerRef.current.on('commandStack.shape.delete.postExecuted', 1500, updateExtensionElements)
 
             modelerContext.modeler = modelerRef;
             modelerContext.availableAccessories = new Map<string, Accessory>();
@@ -137,6 +143,20 @@ function App() {
             functionToApply(event.element);
         }
     }
+
+    function updateExtensionElements(event: ElementDeleteEvent) {
+        const element: Shape = event.context.shape;
+        let compatibilitiesToDelete: Compatibility[] = [];
+
+        if (element.type === "factory:Executor") {
+            compatibilitiesToDelete = modelerContext.compatibilities.filter(compatibility => compatibility.idExecutor === element.id);
+        } else if (ActivityElement.elementTypes.includes(element.type)) {
+            compatibilitiesToDelete = modelerContext.compatibilities.filter(compatibility => compatibility.idActivity === element.id);
+        }
+        
+        compatibilitiesToDelete.forEach(compatibility => compatibility.delete(modelerRef.current!));
+        modelerContext.compatibilities = modelerContext.compatibilities.filter(compatibility => !compatibilitiesToDelete.includes(compatibility));
+    } 
 
     function setupModelData() {
         const elementRegistry = modelerRef.current?.get("elementRegistry") as ElementRegistry;
@@ -369,65 +389,67 @@ function App() {
         } else {
             console.error("Elemento non trovato nel elementRegistry per ID:", elementId);
         }
-    };
-
+    }; 
+    
     const startSimulation = async () => {
         try{
+            setupModelData();
             const diagram = await modelerRef.current?.saveXML();
 
-        const response = await fetch("http://127.0.0.1:8080/simulate", {
-        method: "POST",
-        body: diagram?.xml,
-        });
-
-        const newData = await response.json();
-        setData(newData);
-
-        if (newData) {
-            console.log(modelerRef.current?.saveXML().then(response => console.log(response)));
-
-            console.log("Simulazione avviata con dati:", newData);
-    
-            const executors: Executor[] = newData.executors;
-    
-            const updatedPercentages: Map<string, { Availability: number; QueueLength: number }> = new Map();
-    
-            executors.forEach((executor: Executor) => {
-                let busyValue = 0;
-                let idleValue = 0;
-    
-                if (selectedMetric === 'Availability') {
-                    // Calcola il valore di busy
-                    busyValue = calculateBusyValueForExecutor(executor);
-                } else {
-                    // Calcola il valore di idle
-                    const simulationTotalTime = newData.simulation.totalTime || 1;
-                    idleValue = executor.idle / simulationTotalTime;
-                }
-    
-                // Aggiungi i valori alla mappa mantenendo entrambe le proprietà
-                updatedPercentages.set(executor.id, {
-                    Availability: busyValue,
-                    QueueLength: idleValue,
-                });
-    
-                // Determina la classe del colore in base alla metrica selezionata
-                const value = selectedMetric === 'Availability' ? busyValue : idleValue;
-                const colorClass = getColorClass(value, selectedMetric);
-                changeElementClass(executor.id, colorClass);
+            const response = await fetch("http://127.0.0.1:8080/simulate", {
+            method: "POST",
+            body: diagram?.xml,
             });
-    
-            // Aggiorna lo stato con i nuovi valori
-            setSimulationPercentages(updatedPercentages);
-            setRealTime(newData.simulation.totalTime);
-            setIdealTime(calculateIdealTime(newData.executors));
-            setSimulationStarted(true);
-        } else {
-            alert("Carica un file JSON prima di avviare la simulazione.");
+
+            const newData = await response.json();
+            setData(newData);
+
+            if (newData) {
+                console.log(modelerRef.current?.saveXML().then(response => console.log(response)));
+
+                console.log("Simulazione avviata con dati:", newData);
+        
+                const executors: Executor[] = newData.executors;
+        
+                const updatedPercentages: Map<string, { Availability: number; QueueLength: number }> = new Map();
+        
+                executors.forEach((executor: Executor) => {
+                    let busyValue = 0;
+                    let idleValue = 0;
+        
+                    if (selectedMetric === 'Availability') {
+                        // Calcola il valore di busy
+                        busyValue = calculateBusyValueForExecutor(executor);
+                    } else {
+                        // Calcola il valore di idle
+                        const simulationTotalTime = newData.simulation.totalTime || 1;
+                        idleValue = executor.idle / simulationTotalTime;
+                    }
+        
+                    // Aggiungi i valori alla mappa mantenendo entrambe le proprietà
+                    updatedPercentages.set(executor.id, {
+                        Availability: busyValue,
+                        QueueLength: idleValue,
+                    });
+        
+                    // Determina la classe del colore in base alla metrica selezionata
+                    const value = selectedMetric === 'Availability' ? busyValue : idleValue;
+                    const colorClass = getColorClass(value, selectedMetric);
+                    changeElementClass(executor.id, colorClass);
+                });
+        
+                // Aggiorna lo stato con i nuovi valori
+                setSimulationPercentages(updatedPercentages);
+                setRealTime(newData.simulation.totalTime);
+                setIdealTime(calculateIdealTime(newData.executors));
+                setSimulationStarted(true);
+            } else {
+                alert("Carica un file JSON prima di avviare la simulazione.");
+            }
+        }catch{
+            console.log("errore nella simulazione")
+            alert("Error! The simulation cannot be completed.")
         }
-    }catch{
-        console.log("errore")
-    }
     };
         
     //Grafico generale dei tempi
@@ -606,17 +628,6 @@ function App() {
         setProducedItemsChartData(producedItemsData);
     }, [selectedActivity, data]);
 
-    /* Funzione helper per convertire il tempo in minuti
-    const convertToMinutes = (time: number, unit: TimeUnit): number => {
-        switch (unit) {
-            case 's': return time / 60;   // Converti secondi in minuti
-            case 'm': return time;        // Minuti sono già minuti
-            case 'h': return time * 60;   // Converti ore in minuti
-            case 'd': return time * 1440; // Converti giorni in minuti
-            default: return time;         // Gestire il caso di default come non necessario
-        }
-    }; */
-
     // Funzione per ottenere i dati combinati per una singola attività
     const getBarChartDataForActivity = (activity: Activity): { 
         id: string, 
@@ -676,14 +687,14 @@ function App() {
                 return activity
                     ? { 
                         id: exec.id, 
-                        name: `Executor ${exec.id}`, 
-                        busy: 0, // Manteniamo il campo per evitare errori TypeScript
+                        name: elementNames.get(exec.id) || `Executor ${exec.id}`, // Otteniamo il nome dell'**esecutore**
                         processedItems: activity.processedItems ?? 0 
                     }
                     : null;
             })
-            .filter((exec: Executor) => exec !== null && exec.processedItems > 0); // Rimuove esecutori senza prodotti
-    };    
+            .filter((exec: Executor) => exec !== null && exec.processedItems > 0);
+    };
+      
     
     
     return (
@@ -694,25 +705,27 @@ function App() {
             <Modal
                 isOpen={isModalOpen}
                 onRequestClose={closeModal}
-                contentLabel="Modifica Parametri Visualizzazione"
+                contentLabel="Change visualization parameters"
                 style={{
                     overlay: { backgroundColor: "rgba(0, 0, 0, 0.5)" },
-                    content: { width: "450px", height: "250px", margin: "auto", padding: "20px", borderRadius: "10px" },
+                    content: { width: "35%", height: "180px", margin: "auto", padding: "20px", borderRadius: "10px", textAlign: "center" },
                 }}
             >
-                <h4>Modifica Parametri Visualizzazione</h4>
+                <h4>Change visualization parameters</h4>
 
                 {/* Aggiornato per supportare Availability e Queue Length */}
                 <ColorRangeSlider 
                     initialValues={colorRanges} 
+                    selectedMetric={selectedMetric} // 🔹 Passiamo la metrica attualmente selezionata
                     onChange={(newRanges) => {
-                        setColorRanges(newRanges); // Aggiorniamo lo stato con i nuovi valori
-                        localStorage.setItem("colorThresholds", JSON.stringify(newRanges)); // Salviamo nel localStorage
+                        setColorRanges(newRanges); 
+                        localStorage.setItem("colorThresholds", JSON.stringify(newRanges));
                     }} 
                 />
 
                 <div className="modalFooter">
-                    <button onClick={closeModal} className="closeButton">Chiudi</button>
+                    <button onClick={closeModal} className="closeButton">Cancel</button>
+                    <button onClick={() => {startSimulation(); closeModal();}}  className="okButton">OK</button>
                 </div>
             </Modal>
 
@@ -722,12 +735,12 @@ function App() {
                 <div className="sidePanel">
                     {activeChart === 'pie' && selectedActivity && (
                     <>
-                        {/* Grafico a torta degli esecutori coinvolti nell'attività */}
+                        {/* Grafico a torta degli esecutori coinvolti nell'attività*/}
                         <PieChart 
                             activities={activityChartData.map(item => ({
                                 id: item.id,
                                 name: elementNames.get(item.id) || `Esecutore ${item.id}`,
-                                busy: item.value // Per il primo grafico
+                                busy: item.value 
                             }))} 
                             chartType="activity" 
                         />
@@ -773,7 +786,7 @@ function App() {
 
                     {/* Grafico D3 Generale */}
                     {activeChart === 'd3' && (
-                        <D3Chart idealTime={idealTime} realTime={realTime} title="Confronto tempo Ideale e Reale"/>
+                        <D3Chart idealTime={idealTime} realTime={realTime} title="Ideal time vs Real time "/>
                     )}
 
                     {/* Applica le classi CSS dinamiche agli esecutori nel diagramma */}

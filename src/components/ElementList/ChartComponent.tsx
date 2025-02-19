@@ -11,7 +11,7 @@ const D3Chart: React.FC<D3ChartProps> = ({ idealTime, realTime, title }) => {
     useEffect(() => {
         d3.select('#d3chart').html('');
 
-        const margin = { top: 30, right: 10, bottom: 30, left: 10 }; // Aumentato top per spazio titolo
+        const margin = { top: 30, right: 2, bottom: 30, left: 10 }; // Aumentato top per spazio titolo
         const width = 350;
         const height = 100;
 
@@ -36,8 +36,8 @@ const D3Chart: React.FC<D3ChartProps> = ({ idealTime, realTime, title }) => {
         .range([0, width * 0.6]);
 
         const times = [
-            { label: 'Tempo Ideale', time: `${idealTime}` },
-            { label: 'Tempo Reale', time: `${realTime}` }
+            { label: 'Ideal time', time: `${idealTime}` },
+            { label: 'Real time', time: `${realTime}` }
         ];
 
         svg.selectAll('.bar')

@@ -32,8 +32,7 @@ const BarChart: React.FC<BarChartProps> = ({ data, title, globalMax }) => {
         }
         container.selectAll("*").remove(); // Pulisce il contenitore
 
-
-        const margin = { top: 20, right: 30, bottom: 5, left: 60 }; // Margini
+        const margin = { top: 20, right: 60, bottom: 5, left: 60 }; // Maggior spazio a destra per le etichette
         const width = 350 - margin.left - margin.right; // Larghezza grafico
         const height = 50;
 
@@ -52,7 +51,7 @@ const BarChart: React.FC<BarChartProps> = ({ data, title, globalMax }) => {
         const chart = svg.append("g")
             .attr("transform", `translate(${margin.left},${margin.top})`);
 
-        // Scala logaritmica per il massimo valore
+        // Scala lineare per il massimo valore
         const x = d3.scaleLinear()
             .domain([1, globalMax]) 
             .range([0, width]);
@@ -66,6 +65,7 @@ const BarChart: React.FC<BarChartProps> = ({ data, title, globalMax }) => {
 
         const keys = ['busyPerProduct', 'average', 'max'];
         const colors = ['steelblue', 'lightblue', 'red'];
+        const labels = ['ideal', 'average', 'worst']; // Etichette accanto alle barre
 
         keys.forEach((key, index) => {
             // Disegna le barre
@@ -80,7 +80,7 @@ const BarChart: React.FC<BarChartProps> = ({ data, title, globalMax }) => {
                 .attr("width", d => Math.max(x(Number(d[key as keyof BarChartData])), 1)) // Larghezza minima 1
                 .style("fill", colors[index]);
 
-            // Etichette a sinistra delle barre
+            // **Etichette numeriche a sinistra**
             chart.selectAll(`.label-${key}`)
                 .data(data)
                 .enter()
@@ -93,6 +93,21 @@ const BarChart: React.FC<BarChartProps> = ({ data, title, globalMax }) => {
                 .text(d => Number(d[key as keyof BarChartData]).toFixed(1))
                 .style("fill", "black")
                 .style("font-size", "10px");
+
+            // **Etichette descrittive a destra**
+            chart.selectAll(`.bar-label-${key}`)
+                .data(data)
+                .enter()
+                .append("text")
+                .attr("class", `bar-label-${key}`)
+                .attr("x", d => x(Number(d[key as keyof BarChartData])) + 5) 
+                .attr("y", d => y(d.id)! + index * bandWidth + bandWidth / 2)
+                .attr("dy", "0.35em")
+                .attr("text-anchor", "start")
+                .text(labels[index]) // Etichetta corrispondente
+                .style("fill", "#C0C0C0") 
+                .style("font-size", "10px")
+                .style("font-weight", "normal");
         });
     }, [data, title, globalMax]);
 

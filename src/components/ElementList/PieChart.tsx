@@ -39,10 +39,10 @@ const PieChart: React.FC<PieChartProps> = ({ activities, chartType, width = 150,
 
         // Determina il titolo in base al tipo di grafico
         const chartTitle = chartType === "executor"
-            ? "Grafico dei tempi delle Attività"
+            ? "Time-frame for each activity"
             : chartType === "activity"
-            ? "Grafico degli esecutori coinvolti"
-            : "Prodotti lavorati per esecutore";
+            ? "Involved executors"
+            : "Products processed by each executor";
 
         // Aggiungi il titolo con maggiore spazio
         svg.append('text')
@@ -99,10 +99,18 @@ const PieChart: React.FC<PieChartProps> = ({ activities, chartType, width = 150,
             .attr('x', 16) // Spostato a destra rispetto al rettangolo
             .attr('y', (_, i) => i * 20 + 10) // Allineato verticalmente con il rettangolo
             .style('font-size', '10px')
-            .text(d => 
-                chartType === "processedItems" 
-                    ? `${d.processedItems ?? 0}` // Mostra solo il numero di prodotti processati
-                    : d.name // Per gli altri grafici, mostra il nome
+            .text(d =>{
+                console.log("STAMPA DI D"); 
+                console.log(d); 
+                    if (chartType === "activity") {
+                        return `${d.name}: ${d.busy} minutes`;
+                    } else if (chartType === "processedItems") {
+                        return `${d.name}: ${d.processedItems ?? 0} products`;
+                    } else {
+                        // Default: visualizza solo il nome
+                        return d.name;
+                    }
+                }
             );
     }, [activities, chartType, width, height]);
 

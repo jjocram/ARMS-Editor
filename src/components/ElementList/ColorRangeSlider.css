@@ -59,3 +59,8 @@ span {
     border: 2px solid #6e6e6e !important; /* Imposta il bordo grigio */
 }
 
+.color-range-slider .slider-row.disabled {
+    opacity: 0.5; /* 🔹 Rende la barra più opaca */
+    pointer-events: none; /* 🔹 Impedisce l'interazione */
+}
+
