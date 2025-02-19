@@ -10,7 +10,7 @@ interface Activity {
 
 interface PieChartProps {
   activities: Activity[];
-  chartType: 'executor' | 'activity' | "processedItems"; // Nuova prop per determinare il titolo
+  chartType: 'executor' | 'activity' | "processedItems";
   width?: number;
   height?: number;
 }
@@ -20,7 +20,7 @@ const PieChart: React.FC<PieChartProps> = ({ activities, chartType, width = 150,
 
     useEffect(() => {
         if (!activities || activities.length === 0) {
-            return; // Evita di eseguire il codice se non ci sono attività
+            return;
         }
 
         const container = d3.select(ref.current);
@@ -30,47 +30,40 @@ const PieChart: React.FC<PieChartProps> = ({ activities, chartType, width = 150,
         const radius = Math.min(width, height) / 2;
         const color = d3.scaleOrdinal(d3.schemeCategory10);
 
-        // Crea l'SVG
         const svg = container.append('svg')
-            .attr('width', width + 150) // Spazio extra per la legenda
-            .attr('height', height + 70) // Altezza totale con spazio extra
+            .attr('width', width + 150)
+            .attr('height', height + 70) 
             .style('display', 'block')
             .style('margin', '0 auto');
 
-        // Determina il titolo in base al tipo di grafico
+        //The title according to the chart type
         const chartTitle = chartType === "executor"
             ? "Time-frame for each activity"
             : chartType === "activity"
             ? "Involved executors"
             : "Products processed by each executor";
 
-        // Aggiungi il titolo con maggiore spazio
         svg.append('text')
             .attr('x', (width + 100) / 2)
-            .attr('y', 20) // Maggiore spazio per il titolo
-            .attr('text-anchor', 'middle') // Centra il testo orizzontalmente
+            .attr('y', 20) 
+            .attr('text-anchor', 'middle') 
             .style('font-size', '14px')
             .style('font-weight', 'bold')
             .text(chartTitle);
 
-        // Sposta il gruppo del grafico più in basso
         const chartGroup = svg.append('g')
-            .attr('transform', `translate(${width / 2}, ${(height / 2) + 30})`); // Offset per grafico più basso
-
-        // Prepara la struttura dei dati per il grafico a torta
+            .attr('transform', `translate(${width / 2}, ${(height / 2) + 30})`); 
+      
         const pie = d3.pie<Activity>().value(d => 
             chartType === "processedItems" ? d.processedItems ?? 0 : d.busy
         );
         
-
         const dataReady = pie(activities);
 
-        // Definisci l'arco
         const arc = d3.arc<d3.PieArcDatum<Activity>>()
             .innerRadius(0)
             .outerRadius(radius);
 
-        // Disegna gli archi
         chartGroup.selectAll('path')
             .data(dataReady)
             .enter()
@@ -78,16 +71,15 @@ const PieChart: React.FC<PieChartProps> = ({ activities, chartType, width = 150,
             .attr('d', arc)
             .attr('fill', d => color(d.data.id));
 
-        // Legenda
         const legendGroup = svg.append('g')
-            .attr('transform', `translate(${width + 20}, 50)`); // Posiziona la legenda a destra
+            .attr('transform', `translate(${width + 20}, 50)`); 
 
         legendGroup.selectAll('rect')
             .data(activities)
             .enter()
             .append('rect')
             .attr('x', 0)
-            .attr('y', (_, i) => i * 20) // Posizione verticale per ogni elemento
+            .attr('y', (_, i) => i * 20) 
             .attr('width', 12)
             .attr('height', 12)
             .attr('fill', d => color(d.id));
@@ -96,8 +88,8 @@ const PieChart: React.FC<PieChartProps> = ({ activities, chartType, width = 150,
             .data(activities)
             .enter()
             .append('text')
-            .attr('x', 16) // Spostato a destra rispetto al rettangolo
-            .attr('y', (_, i) => i * 20 + 10) // Allineato verticalmente con il rettangolo
+            .attr('x', 16) 
+            .attr('y', (_, i) => i * 20 + 10) 
             .style('font-size', '10px')
             .text(d =>{
                 console.log("STAMPA DI D"); 
@@ -107,7 +99,7 @@ const PieChart: React.FC<PieChartProps> = ({ activities, chartType, width = 150,
                     } else if (chartType === "processedItems") {
                         return `${d.name}: ${d.processedItems ?? 0} products`;
                     } else {
-                        // Default: visualizza solo il nome
+                        // Default: just name
                         return d.name;
                     }
                 }

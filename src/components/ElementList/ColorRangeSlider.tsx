@@ -8,7 +8,7 @@ interface ColorRangeSliderProps {
         availability: [number, number];
         queueLength: [number, number];
     };
-    selectedMetric: "Availability" | "QueueLength"; // 🔹 Nuova prop per la metrica selezionata
+    selectedMetric: "Availability" | "QueueLength"; 
     onChange: (ranges: {
         availability: [number, number];
         queueLength: [number, number];
@@ -61,7 +61,7 @@ const ColorRangeSlider: React.FC<ColorRangeSliderProps> = ({ initialValues, sele
                     step={0.01}
                     progress
                     onChange={(value) => handleValueChange("availability", value as [number, number])}
-                    disabled={selectedMetric !== "Availability"} // 🔹 Disabilita se non è la metrica attiva
+                    disabled={selectedMetric !== "Availability"} 
                 />
                 <span>{`${values.availability[0].toFixed(2)} - ${values.availability[1].toFixed(2)}`}</span>
             </div>
@@ -76,7 +76,7 @@ const ColorRangeSlider: React.FC<ColorRangeSliderProps> = ({ initialValues, sele
                     step={0.01}
                     progress
                     onChange={(value) => handleValueChange("queueLength", value as [number, number])}
-                    disabled={selectedMetric !== "QueueLength"} // 🔹 Disabilita se non è la metrica attiva
+                    disabled={selectedMetric !== "QueueLength"} 
                 />
                 <span>{`${values.queueLength[0].toFixed(2)} - ${values.queueLength[1].toFixed(2)}`}</span>
             </div>

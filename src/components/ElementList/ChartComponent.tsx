@@ -11,7 +11,7 @@ const D3Chart: React.FC<D3ChartProps> = ({ idealTime, realTime, title }) => {
     useEffect(() => {
         d3.select('#d3chart').html('');
 
-        const margin = { top: 30, right: 2, bottom: 30, left: 10 }; // Aumentato top per spazio titolo
+        const margin = { top: 30, right: 2, bottom: 30, left: 10 }; 
         const width = 350;
         const height = 100;
 
@@ -22,11 +22,10 @@ const D3Chart: React.FC<D3ChartProps> = ({ idealTime, realTime, title }) => {
         .append('g')
         .attr('transform', `translate(${margin.left},${margin.top})`);
 
-        // Aggiunta del titolo
         svg.append('text')
         .attr('x', width / 2)
-        .attr('y', -10) // Posizione sopra l'asse X, all'interno del margine superiore
-        .attr('text-anchor', 'middle') // Centra il testo rispetto alle coordinate x
+        .attr('y', -10) 
+        .attr('text-anchor', 'middle') 
         .style('font-size', '16px')
         .style('font-weight', 'bold')
         .text(title);
@@ -46,7 +45,7 @@ const D3Chart: React.FC<D3ChartProps> = ({ idealTime, realTime, title }) => {
         .append('rect')
         .attr('class', 'bar')
         .attr('x', 0)
-        .attr('y', (d, i) => i * 30 + 20) // Aggiusta la posizione delle barre per il titolo
+        .attr('y', (d, i) => i * 30 + 20) 
         .attr('width', d => x(parseFloat(d.time)))
         .attr('height', 25)
         .attr('fill', (d, i) => i % 2 ? 'steelblue' : 'green');
@@ -56,7 +55,7 @@ const D3Chart: React.FC<D3ChartProps> = ({ idealTime, realTime, title }) => {
         .enter()
         .append('text')
         .attr('x', d => x(parseFloat(d.time)) + 3)
-        .attr('y', (d, i) => i * 30 + 35) // Aggiusta la posizione delle label per il titolo
+        .attr('y', (d, i) => i * 30 + 35)
         .attr('dy', '.35em')
         .attr('fill', 'black')
         .text(d => `${d.label}: ${d.time}`);

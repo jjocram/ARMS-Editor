@@ -66,10 +66,10 @@ export default function MenuBar({setXmlDiagramToEmpty, setSelectedMetric, startS
     };
 
     const handleStartSimulation = async () => {
-        setLoading(true);  // Mostra il loader
-        await startSimulation();  // Avvia la simulazione
-        setLoading(false);  // Nasconde il loader quando finisce
-        setShowConfirmModal(false); // Chiude il popup
+        setLoading(true);  
+        await startSimulation();  
+        setLoading(false); 
+        setShowConfirmModal(false);
     };
 
     return (

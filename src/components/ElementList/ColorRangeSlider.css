@@ -43,24 +43,20 @@ span {
         rgba(0, 128, 0, 0.5) 100%) !important;
 }
 
-
-
-/* Rimuove completamente il blu di default di rsuite */
 .color-range-slider .rs-slider-progress {
     background: none !important;
 }
 
 .rs-slider-progress-bar {
-    background-color: yellow !important; /* Cambia il colore da blu a giallo */
+    background-color: yellow !important; 
 }
 
-/* Cambia il colore del bordo dei pallini */
 .rs-slider-handle:before{
-    border: 2px solid #6e6e6e !important; /* Imposta il bordo grigio */
+    border: 2px solid #6e6e6e !important;
 }
 
 .color-range-slider .slider-row.disabled {
-    opacity: 0.5; /* 🔹 Rende la barra più opaca */
-    pointer-events: none; /* 🔹 Impedisce l'interazione */
+    opacity: 0.5; 
+    pointer-events: none; 
 }
 

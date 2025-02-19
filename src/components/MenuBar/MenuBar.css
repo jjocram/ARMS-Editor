@@ -62,11 +62,11 @@
 }
 
 .okButton {
-  background-color: white !important; /* Sfondo bianco */
-  border: 2px solid #6e6e6e !important; /* Bordo grigio */
-  color: #6e6e6e !important; /* Testo grigio */
+  background-color: white !important; 
+  border: 2px solid #6e6e6e !important; 
+  color: #6e6e6e !important; 
   cursor: pointer;
-  transition: all 0.2s ease-in-out; /* Effetto al passaggio del mouse */
+  transition: all 0.2s ease-in-out; 
 }
 
 .okButton:hover {
