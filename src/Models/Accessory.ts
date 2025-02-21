@@ -29,6 +29,7 @@ export class Accessory extends ExtensionElement {
         });
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     overwrite(oldElement: Shape, _moddle: Moddle): Shape {
         oldElement.name = this.name;
         oldElement.quantity = this.quantity;
@@ -44,7 +45,7 @@ export class Accessory extends ExtensionElement {
         newValues = newValues
             .filter(element => is(element, "factory:Compatibility"))
             .map(compatibility => {
-                compatibility.accessories = compatibility.accessories.filter((accessory: Shape) => accessory.id !== this.id)
+                compatibility.accessories = compatibility.accessories?.filter((accessory: Shape) => accessory.id !== this.id) ?? []
                 return compatibility
             });
 

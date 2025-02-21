@@ -5,13 +5,13 @@ import {useModelerRef} from "../../ModelerContext.ts";
 import AccessoryListModal from "../ElementList/AccessoryListModal.tsx";
 import InventoryListModal from "../ElementList/InventoryListModal.tsx";
 import ProductRequestListModal from "../ElementList/ProductRequestListModal.tsx";
-import axios from "axios";
 
 interface MenuBarProps {
     setXmlDiagramToEmpty: () => void
+    runSimulation: () => void
 }
 
-export default function MenuBar({setXmlDiagramToEmpty} : MenuBarProps) {
+export default function MenuBar({setXmlDiagramToEmpty, runSimulation} : MenuBarProps) {
     const modelerRef = useModelerRef();
 
     const [showInventoriesModal, setShowInventoriesModal] = useState(false);
@@ -51,24 +51,10 @@ export default function MenuBar({setXmlDiagramToEmpty} : MenuBarProps) {
         reader.readAsText(file);
     }
 
-    function runSimulation() {
-        modelerRef.modeler.current?.saveXML({format: true})
-            .then(async res => {
-                const file = new Blob([res.xml ?? ""], {type: 'text/xml'});
-
-                const formData = new FormData();
-                formData.append('file', file);
-
-                const response = await axios.post("http://127.0.0.1:8080/simulate", formData);
-
-                console.log(response.data);
-            });
-    }
-
     return (
         <>
             <ButtonToolbar>
-                <Dropdown title="File">
+                <Dropdown title="File" style={{zIndex: 999}}>
                     <DropdownItem onSelect={() => setXmlDiagramToEmpty()}>New diagram</DropdownItem>
                     <DropdownItem onSelect={() => fileInputRef.current?.click()}>Upload diagram <input
                         ref={fileInputRef}
@@ -76,11 +62,11 @@ export default function MenuBar({setXmlDiagramToEmpty} : MenuBarProps) {
                         onChange={handleFileInput}/></DropdownItem>
                     <DropdownItem onSelect={() => downloadDiagram()}>Download diagram</DropdownItem>
                 </Dropdown>
-                <Dropdown title="View">
+                <Dropdown title="View" style={{zIndex: 999}}>
                     <DropdownItem>Show/Hide Executors</DropdownItem>
                     <DropdownItem>Show/Hide Warnings</DropdownItem>
                 </Dropdown>
-                <Dropdown title="Simulation">
+                <Dropdown title="Simulation" style={{zIndex: 999}}>
                     <DropdownItem onSelect={() => setShowInventoriesModal(true)}>Inventories</DropdownItem>
                     <DropdownItem onSelect={() => setShowAccessoryModal(true)}>Accessories</DropdownItem>
                     <DropdownItem onSelect={() => setShowProductRequestModal(true)}>Product requests</DropdownItem>

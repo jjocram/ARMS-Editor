@@ -25,6 +25,7 @@ import MinusRoundIcon from "@rsuite/icons/MinusRound";
 import BaseInfo from "./BaseInfo.tsx";
 import AdditionalInfo from "./AdditionalInfo.tsx";
 import ButtonOpenEditor from "./ButtonOpenEditor.tsx";
+import {setSpecificElementFromShape} from "../../Utils.ts";
 
 interface PropertiesDrawerProps {
     shape: Shape | null,
@@ -47,15 +48,7 @@ function PropertiesDrawer({shape, isOpen, setIsOpen}: PropertiesDrawerProps) {
 
     useEffect(() => {
         if (shape !== null) {
-            if (ActivityElement.elementTypes.includes(shape.type)) {
-                setElement(new ActivityElement(shape, modelerRef.modeler.current!, modelerRef.compatibilities!));
-            } else if (shape.type === "factory:Executor") {
-                setElement(new ExecutorElement(shape, []));
-            } else if (shape.type === "factory:Inventory") {
-                setElement(modelerRef.inventories.get(shape.id)!);
-            } else {
-                setElement(new BaseElement(shape));
-            }
+            setSpecificElementFromShape(shape, setElement, modelerRef);
         }
     }, [shape])
 
