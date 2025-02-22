@@ -17,3 +17,88 @@
   -ms-user-select: none;
   user-select: none;
 }
+
+/* Colore verde per utilizzo basso */
+.bpmn-element-green polygon {
+  fill: green !important;  
+  fill-opacity: 0.3 !important;
+}
+
+/* Colore giallo per utilizzo medio */
+.bpmn-element-yellow polygon {
+  fill: yellow !important;  
+  fill-opacity: 0.3 !important;
+}
+
+/* Colore rosso per utilizzo alto */
+.bpmn-element-red polygon {
+  fill: red !important;  
+  fill-opacity: 0.3 !important;
+}
+
+.executor-highlight {
+  opacity: 1;
+  transition: opacity 0.3s ease;
+}
+
+.executor-dimmed {
+  opacity: 0.5;
+  transition: opacity 0.3s ease;
+}
+
+.layoutContainer {
+  display: flex;
+  height: calc(100vh - 60px); 
+  flex-direction: row; 
+}
+
+.diagramContainer {
+  flex-grow: 1; 
+  overflow: auto; 
+}
+.sidePanel {
+  width: 40%; 
+  border-left: 1px solid #ccc; 
+  height: 100%; 
+  overflow: auto; 
+}
+
+/*PANNELLO MODIFICHE SIMULAZIONE*/
+
+.modalContent label {
+  display: block;
+  margin-bottom: 15px;
+  font-size: 14px;
+}
+
+.modalFooter {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 20px;
+}
+
+.closeButton,
+.saveButton {
+  padding: 8px 12px;
+  border: none;
+  cursor: pointer;
+  border-radius: 5px;
+}
+
+.closeButton {
+  background-color: #929292;
+  color: white;
+}
+
+.saveButton {
+  background-color: var(--rs-btn-default-bg);;
+  color: var(--rs-btn-default-text);
+}
+
+.saveButton:hover {
+  background-color: var(--rs-btn-default-hover-bg);
+}
+
+.closeButton:hover {
+  background-color: #6e6e6e;
+}

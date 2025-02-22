@@ -1,0 +1,62 @@
+.color-range-slider {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    padding: 10px;
+}
+
+.slider-row {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.slider-label {
+    width: 120px;
+    font-weight: bold;
+}
+
+.rs-slider {
+    flex-grow: 1;
+}
+
+span {
+    min-width: 60px;
+    text-align: center;
+}
+
+/* Availability Slider */
+.color-range-slider .availability-slider .rs-slider-bar {
+    background: linear-gradient(to right,
+        rgba(255, 0, 0, 0.5) 0%, 
+        rgba(255, 0, 0, 0.5) var(--availability-left), 
+        rgba(0, 128, 0, 0.5) var(--availability-right), 
+        rgba(0, 128, 0, 0.5) 100%) !important;
+}
+
+/* Queue Length Slider */
+.color-range-slider .queue-length-slider .rs-slider-bar {
+    background: linear-gradient(to right,
+        rgba(255, 0, 0, 0.5) 0%, 
+        rgba(255, 0, 0, 0.5) var(--queue-left), 
+        rgba(0, 128, 0, 0.5) var(--queue-right), 
+        rgba(0, 128, 0, 0.5) 100%) !important;
+}
+
+.color-range-slider .rs-slider-progress {
+    background: none !important;
+}
+
+.rs-slider-progress-bar {
+    background-color: yellow !important; 
+}
+
+.rs-slider-handle:before{
+    border: 2px solid #6e6e6e !important;
+}
+
+.color-range-slider .slider-row.disabled {
+    opacity: 0.5; 
+    pointer-events: none; 
+}
+
