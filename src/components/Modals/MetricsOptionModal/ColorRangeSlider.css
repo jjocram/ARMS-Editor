@@ -1,0 +1,118 @@
+.range_container {
+    height: 100vh;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.slider {
+    position: relative;
+    width: 100%;
+}
+
+.slider__track,
+.slider__range,
+.slider__value {
+    position: absolute;
+}
+
+.slider__track,
+.slider__range {
+    border-radius: 3px;
+    height: 5px;
+}
+
+.slider__track {
+    background-color: #ced4da;
+    width: 100%;
+    z-index: 1;
+}
+
+.slider__range {
+    border-radius: 3px;
+    height: 0.5em;
+    z-index: 2;
+    transition: background-color 0.3s ease-in-out;
+}
+
+.slider__range:hover {
+    cursor: pointer;
+}
+
+.slider__right-value {
+    position: absolute;
+    margin-top: 1em;
+    margin-left: 100%;
+}
+
+.slider__left-value {
+    position: absolute;
+    margin-top: 1em;
+}
+
+/* Style for each range value */
+.slider__value {
+    position: absolute;
+    top: 1em; /* Distance below the slider */
+    color: black;
+    font-size: 12px;
+    transform: translateX(-50%);
+    white-space: nowrap;
+}
+
+/* Removing the default appearance */
+.thumb,
+.thumb::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.thumb {
+    pointer-events: none;
+    position: absolute;
+    height: 0;
+    width: 100%;
+    outline: none;
+}
+
+/* Handle different z-indexing for overlapping thumbs */
+.thumb--zindex-3 {
+    z-index: 3;
+}
+
+.thumb--zindex-4 {
+    z-index: 4;
+}
+
+.thumb--zindex-5 {
+    z-index: 5;
+}
+
+/* For Chrome browsers */
+.thumb::-webkit-slider-thumb {
+    background-color: #f1f5f7;
+    border: none;
+    border-radius: 50%;
+    box-shadow: 0 0 1px 1px #ced4da;
+    cursor: pointer;
+    height: 18px;
+    width: 18px;
+    margin-top: 4px;
+    pointer-events: all;
+    position: relative;
+}
+
+/* For Firefox browsers */
+.thumb::-moz-range-thumb {
+    background-color: #f1f5f7;
+    border: none;
+    border-radius: 50%;
+    box-shadow: 0 0 1px 1px #ced4da;
+    cursor: pointer;
+    height: 18px;
+    width: 18px;
+    margin-top: 4px;
+    pointer-events: all;
+    position: relative;
+}
