@@ -1,7 +1,7 @@
 import {Shape} from "bpmn-js/lib/model/Types.ts";
 import {
     getExecutorsBusyTimePerActivity,
-    MetricResult
+    MetricResult, toDataExecutorActivitiesBarChart
 } from "../../Models/SimulationResult.ts";
 import {Heading, Text, VStack} from "rsuite";
 import {ReactElement, useEffect, useState} from "react";
@@ -9,7 +9,7 @@ import {BaseElement} from "../../Models/BaseElement.ts";
 import {useModelerRef} from "../../ModelerContext.ts";
 import {setSpecificElementFromShape} from "../../Utils.ts";
 import {ActivityElement} from "../../Models/ActivityElement.ts";
-import {Cell, Legend, Pie, PieChart, Tooltip} from "recharts";
+import {Bar, BarChart, CartesianGrid, Cell, Legend, Pie, PieChart, Tooltip, XAxis, YAxis} from "recharts";
 
 interface ChartElementProps {
     simulationResult: MetricResult
@@ -32,7 +32,7 @@ export default function ChartsElement({simulationResult, shape}: ChartElementPro
             ["factory:Executor", <>
                 {getExecutorsBusyTimePerActivity(element.id, simulationResult, modelerRef.activities).map((activityData, index) => {
                     return (
-                        <PieChart width={400} height={400} key={`${element.id}-${index}`}>
+                        <PieChart width={200} height={200} key={`${element.id}-${index}`}>
                             <Pie dataKey="value" data={activityData} isAnimationActive={false}
                                  blendStroke={activityData.length === 1}>
                                 {activityData.map((_entry, index) => (
@@ -44,7 +44,22 @@ export default function ChartsElement({simulationResult, shape}: ChartElementPro
                         </PieChart>
                     );
                 })}
-
+                {toDataExecutorActivitiesBarChart(simulationResult, element, modelerRef.activities).map((executorsData, index) => {
+                    return (
+                        <div key={executorsData.id}>
+                            <Heading>{element.name}-{index + 1}</Heading>
+                            <BarChart width={300} height={250} data={executorsData.activities} layout="vertical">
+                                <CartesianGrid strokeDasharray="3 3"/>
+                                <XAxis type="number"/>
+                                <YAxis dataKey="name" type="category"/>
+                                <Tooltip/>
+                                <Legend/>
+                                <Bar dataKey="busyPerProduct" fill="#1F3A93" name="Ideal time"/>
+                                <Bar dataKey="averageTime" fill="#00AA98" name="Average time"/>
+                                <Bar dataKey="worstTime" fill="#FF6B6B" name="Worst result"/>
+                            </BarChart>
+                        </div>)
+                })}
             </>],
             ["factory:Inventory", <div/>],
         ]);

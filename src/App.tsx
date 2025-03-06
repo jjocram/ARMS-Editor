@@ -1,7 +1,7 @@
 import './App.css'
 import Modeler from "bpmn-js/lib/Modeler";
 import {Shape} from 'bpmn-js/lib/model/Types.ts'
-import {useEffect, useRef, useState} from "react";
+import {useEffect, useMemo, useRef, useState} from "react";
 import {ModelerContext, ModelerRefContext} from "./ModelerContext.ts";
 
 import MenuBar from "./components/MenuBar/MenuBar.tsx";
@@ -27,12 +27,14 @@ import Compatibility, {AccessoryCompatibility} from "./Models/Compatibility.ts";
 import Inventory from "./Models/Inventory.ts";
 import ProductRequest from "./Models/ProductRequest.ts";
 import axios from "axios";
-import {getAllExecutorsId, MetricResult} from "./Models/SimulationResult.ts";
+import {getAllExecutorsId, getExecutorsAvailability, MetricResult} from "./Models/SimulationResult.ts";
 import LoadingSimulationModal from "./components/LoadingSimulationModal.tsx";
 import MetricsDrawer from "./components/MetricsDrawer/MetricsDrawer.tsx";
 import {ActivityElement} from "./Models/ActivityElement.ts";
 import {BaseElement} from "./Models/BaseElement.ts";
 import {ElementLike} from 'diagram-js/lib/model/Types.ts';
+import {getExecutorColorClass} from "./Utils.ts";
+import {ExecutorMetricsRanges, getFromLocalStorageOrDefault, TypeOfMetrics} from "./ExecutorsColorRanges.ts";
 
 interface ElementEvent {
     element: Shape,
@@ -57,6 +59,15 @@ function App() {
     const [simulationStatus, setSimulationStatus] = useState<"loading" | "error" | "success">("loading");
     const [simulationError, setSimulationError] = useState<string>("");
     const [simulationResult, setSimulationResult] = useState<MetricResult | null>(null);
+
+    const [executorsColorThresholds, setExecutorsColorThreshold] = useState<ExecutorMetricsRanges>(getFromLocalStorageOrDefault());
+    const [executorsColorMetricSelected, setExecutorsColorMetricSelected] = useState<TypeOfMetrics>("availability")
+    const allExecutorsId = useMemo(() => simulationResult ? getAllExecutorsId(simulationResult) : undefined, [simulationResult]);
+    const executorsSimulationValues = useMemo(() => {
+        return simulationResult ? {
+            availability: getExecutorsAvailability(simulationResult),
+        } : undefined
+    }, [simulationResult]);
 
     function initializeModeler() {
         const container = document.getElementById('diagramContainer') as HTMLElement;
@@ -184,8 +195,6 @@ function App() {
             process.businessObject.extensionElements = extensionElementsElement;
         }
 
-        console.log(extensionElementsElement)
-
         return extensionElementsElement.get("values");
     }
 
@@ -272,19 +281,26 @@ function App() {
         setXmlDiagramToEmpty();
     }, []);
 
-    useEffect(applyStyleToExecutors, [simulationResult])
+    useEffect(applyStyleToExecutors, [simulationResult, executorsColorThresholds])
 
     function applyStyleToExecutors() {
         if (simulationResult) {
-            const executorsId = getAllExecutorsId(simulationResult!)
+            const executorsId = allExecutorsId!
             const elements = document.querySelectorAll('[data-element-id]')
+            const executorsValue = executorsSimulationValues!.availability;
             elements.forEach(element => {
-                if (executorsId.includes(element.getAttribute("data-element-id")!)) {
-                    const polygon = element.querySelector("polygon")!;
-                    polygon.style.fill = "red";
+                const elementId = element.getAttribute("data-element-id")! as string;
+                if (executorsId.includes(elementId)) {
+                    applyStyleToExecutor(element, getExecutorColorClass(executorsValue.get(elementId)!, executorsColorMetricSelected, executorsColorThresholds), "0.3")
                 }
             })
         }
+    }
+
+    function applyStyleToExecutor(element: Element, fill: string, fillOpacity: string) {
+        const polygon = element.querySelector("polygon")!;
+        polygon.style.fill = fill;
+        polygon.style.fillOpacity = fillOpacity;
     }
 
     function runSimulation() {
@@ -316,7 +332,12 @@ function App() {
     return (
         <div className="App">
             <ModelerRefContext.Provider value={modelerContext}>
-                <MenuBar setXmlDiagramToEmpty={setXmlDiagramToEmpty} runSimulation={runSimulation}/>
+                <MenuBar setXmlDiagramToEmpty={setXmlDiagramToEmpty}
+                         runSimulation={runSimulation}
+                         executorsColorThresholds={executorsColorThresholds}
+                         setExecutorsColorThresholds={setExecutorsColorThreshold}
+                         selectedMetric={executorsColorMetricSelected}
+                         setSelectedMetric={setExecutorsColorMetricSelected}/>
                 <div id="diagramContainer" className="diagramContainer"/>
                 <PropertiesDrawer shape={selectedElement} isOpen={isDrawerOpen} setIsOpen={setDrawerOpen}/>
                 {simulationStatus === "success" &&

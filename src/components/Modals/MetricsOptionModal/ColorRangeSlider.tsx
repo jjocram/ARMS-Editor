@@ -1,5 +1,5 @@
 import React, {ChangeEvent, useCallback, useEffect, useRef, useState} from "react";
-import "./ColorRangeSliderV2.css";
+import "./ColorRangeSlider.css";
 import classnames from "classnames";
 import {ColorRange} from "../../../ExecutorsColorRanges.ts";
 import {Popover, Whisper} from "rsuite";
@@ -18,7 +18,7 @@ export function ColorRangeSlider({ranges, onChange, onChangeColor}: ColorRangeSl
     // Util state
     const [isDragging, setIsDragging] = useState(false);
 
-    // Generate initial values evenly spread across the range
+    // Generate initial values based on ranges
     const [values, setValues] = useState(Array.from(new Set(ranges.flatMap((r) => [r.min * 100, r.max * 100]).filter((v) => v !== 0 && v !== 100))));
 
     const rangeRefs = useRef<HTMLDivElement[]>([]); // Store refs for multiple ranges
