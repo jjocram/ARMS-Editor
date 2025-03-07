@@ -314,7 +314,7 @@ function App() {
                 const formData = new FormData();
                 formData.append('file', file);
 
-                axios.post("http://127.0.0.1:8080/simulate", formData)
+                axios.post("http://0.0.0.0:1234/simulate", formData)
                     .then(async res => {
                         const simulationResultReceived: MetricResult = res.data;
                         setSimulationStatus("success");
