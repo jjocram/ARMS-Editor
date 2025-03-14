@@ -15,6 +15,12 @@ export default class CustomPalette {
       return function (event) {
         const businessObject = bpmnFactory.create("factory:Executor");
         businessObject.id = 'Executor' + businessObject.id;
+        businessObject.quantity = "1"
+        businessObject.cost = "0"
+        businessObject.energyConsumption = "0"
+        businessObject.wasteGeneration = "0"
+        businessObject.maintenanceCost = "0"
+
 
         const shape = elementFactory.createShape({
           type: "factory:Executor",

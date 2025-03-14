@@ -110,13 +110,13 @@ export function getIdealTime(metricResult: MetricResult, compatibilities: Compat
 }
 
 export function toDataExecutorActivitiesBarChart(metricResult: MetricResult, executor: BaseElement, activities: Map<string, BaseElement>) {
-    return  metricResult.executors
+    return metricResult.executors
         .filter((executorResult) => getGenericExecutorId(executorResult.id) === executor.id)
         .map(executorResult => {
             return {
                 id: executorResult.id,
                 activities: executorResult.activities.map(activityResult => {
-                    console.log(activityResult  )
+                    console.log(activityResult)
                     return {
                         id: activityResult.id,
                         name: activities.get(activityResult.id)?.name ?? "name not found",
@@ -129,6 +129,31 @@ export function toDataExecutorActivitiesBarChart(metricResult: MetricResult, exe
         });
 }
 
-export function toDataActivityPieChart(metricResult: MetricResult, activity: BaseElement) {
+export function toDataActivityExecutorsTimePieChart(metricResult: MetricResult, activity: BaseElement, executors: Map<string, BaseElement>) {
+    return getExecutorsOfActivity(metricResult, activity)
+        .map((executor) => {
+            const execActivity = executor.activities.find((a) => a.id === activity.id)
+            return {
+                id: executor.id,
+                name: executors.get(getGenericExecutorId(executor.id))?.name ?? "name not found",
+                value: execActivity ? execActivity.busy : 0,
+            }
+        })
+}
 
+export function toDataActivityExecutorsProductsPieChart(metricResult: MetricResult, activity: BaseElement, executors: Map<string, BaseElement>) {
+    return getExecutorsOfActivity(metricResult, activity)
+        .map((executor) => {
+            const execActivity = executor.activities.find((a) => a.id === activity.id)
+            return {
+                id: executor.id,
+                name: executors.get(getGenericExecutorId(executor.id))?.name ?? "name not found",
+                value: execActivity ? execActivity.processedItems : 0,
+            }
+        })
+}
+
+function getExecutorsOfActivity(metricResult: MetricResult, activity: BaseElement) {
+    return metricResult.executors
+        .filter((executor) => executor.activities.some((a) => a.id === activity.id))
 }

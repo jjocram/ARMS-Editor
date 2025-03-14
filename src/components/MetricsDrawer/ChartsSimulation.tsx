@@ -19,8 +19,8 @@ export default function ChartsSimulation({simulationResult} : ChartsSimulationPr
                 <YAxis dataKey="name" type="category"/>
                 <Tooltip />
                 <Legend />
-                <Bar dataKey="Simulated" fill="#8884d8" />
-                <Bar dataKey="Ideal" fill="#7784aa" />
+                <Bar dataKey="Simulated" fill="#8884d8" isAnimationActive={false}/>
+                <Bar dataKey="Ideal" fill="#7784aa" isAnimationActive={false}/>
             </BarChart>
         </VStack>
     );

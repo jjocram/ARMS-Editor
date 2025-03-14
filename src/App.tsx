@@ -47,6 +47,8 @@ interface ElementDeleteEvent {
     }
 }
 
+const arms_service = import.meta.env.VITE_ARMS_SIMULATOR_URL;
+
 function App() {
     const modelerRef = useRef<Modeler | null>(null);
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -270,7 +272,7 @@ function App() {
 
     function setXmlDiagramToEmpty() {
         setSimulationResult(null);
-        fetch("/empty_diagram.bpmn")
+        fetch("/ARMS-Editor/empty_diagram.bpmn")
             .then(res => res.text())
             .then(data => modelerRef.current?.importXML(data))
             .catch(err => console.error(err));
@@ -314,7 +316,7 @@ function App() {
                 const formData = new FormData();
                 formData.append('file', file);
 
-                axios.post("http://0.0.0.0:1234/simulate", formData)
+                axios.post(`${arms_service}/simulate`, formData)
                     .then(async res => {
                         const simulationResultReceived: MetricResult = res.data;
                         setSimulationStatus("success");

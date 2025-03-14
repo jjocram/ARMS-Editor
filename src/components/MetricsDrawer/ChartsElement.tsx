@@ -1,7 +1,10 @@
 import {Shape} from "bpmn-js/lib/model/Types.ts";
 import {
     getExecutorsBusyTimePerActivity,
-    MetricResult, toDataExecutorActivitiesBarChart
+    MetricResult,
+    toDataActivityExecutorsProductsPieChart,
+    toDataActivityExecutorsTimePieChart,
+    toDataExecutorActivitiesBarChart
 } from "../../Models/SimulationResult.ts";
 import {Heading, Text, VStack} from "rsuite";
 import {ReactElement, useEffect, useState} from "react";
@@ -32,31 +35,36 @@ export default function ChartsElement({simulationResult, shape}: ChartElementPro
             ["factory:Executor", <>
                 {getExecutorsBusyTimePerActivity(element.id, simulationResult, modelerRef.activities).map((activityData, index) => {
                     return (
-                        <PieChart width={200} height={200} key={`${element.id}-${index}`}>
-                            <Pie dataKey="value" data={activityData} isAnimationActive={false}
-                                 blendStroke={activityData.length === 1}>
-                                {activityData.map((_entry, index) => (
-                                    <Cell key={`cell-${index}`} fill={colors[index]}/>
-                                ))}
-                            </Pie>
-                            <Tooltip/>
-                            <Legend/>
-                        </PieChart>
+                        <div key={`${element.id}-${index}`}>
+                            <Text weight="bold" size="lg">Time-frame for {element.name}-{index + 1}</Text>
+                            <PieChart width={200} height={200}>
+                                <Pie dataKey="value" data={activityData} isAnimationActive={false}
+                                     blendStroke={activityData.length === 1}>
+                                    {activityData.map((_entry, index) => (
+                                        <Cell key={`cell-${index}`} fill={colors[index]}/>
+                                    ))}
+                                </Pie>
+                                <Tooltip/>
+                                <Legend/>
+                            </PieChart>
+                        </div>
                     );
                 })}
                 {toDataExecutorActivitiesBarChart(simulationResult, element, modelerRef.activities).map((executorsData, index) => {
                     return (
                         <div key={executorsData.id}>
-                            <Heading>{element.name}-{index + 1}</Heading>
+                            <Text weight="bold" size="lg">Times for {element.name}-{index + 1}</Text>
                             <BarChart width={300} height={250} data={executorsData.activities} layout="vertical">
                                 <CartesianGrid strokeDasharray="3 3"/>
                                 <XAxis type="number"/>
                                 <YAxis dataKey="name" type="category"/>
                                 <Tooltip/>
                                 <Legend/>
-                                <Bar dataKey="busyPerProduct" fill="#1F3A93" name="Ideal time"/>
-                                <Bar dataKey="averageTime" fill="#00AA98" name="Average time"/>
-                                <Bar dataKey="worstTime" fill="#FF6B6B" name="Worst result"/>
+                                <Bar dataKey="busyPerProduct" fill="#1F3A93" name="Ideal time"
+                                     isAnimationActive={false}/>
+                                <Bar dataKey="averageTime" fill="#00AA98" name="Average time"
+                                     isAnimationActive={false}/>
+                                <Bar dataKey="worstTime" fill="#FF6B6B" name="Worst result" isAnimationActive={false}/>
                             </BarChart>
                         </div>)
                 })}
@@ -64,7 +72,28 @@ export default function ChartsElement({simulationResult, shape}: ChartElementPro
             ["factory:Inventory", <div/>],
         ]);
         for (const activityType of ActivityElement.elementTypes) {
-            typeCharts.set(activityType, <div/>);
+            const pieChart = (data: {id: string, name: string, value: number}[]) => {
+                return (
+                    <PieChart width={200} height={200}>
+                        <Pie dataKey="value" data={data}
+                             isAnimationActive={false}
+                             blendStroke={data.length === 1}>
+                            {data.map((_entry, index) => (
+                                <Cell key={`cell-${index}`} fill={colors[index]}/>
+                            ))}
+                        </Pie>
+                        <Tooltip />
+                        <Legend />
+                    </PieChart>
+                )
+            }
+            typeCharts.set(activityType, (<>
+                <Text weight="bold" size="lg">Times of assigned executors</Text>
+                {pieChart(toDataActivityExecutorsTimePieChart(simulationResult, element, modelerRef.executors))}
+
+                <Text weight="bold" size="lg">Products processed at assigned executors</Text>
+                {pieChart(toDataActivityExecutorsProductsPieChart(simulationResult, element, modelerRef.executors))}
+            </>));
         }
 
         return typeCharts.get(element.type) ?? noData;
