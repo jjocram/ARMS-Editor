@@ -157,7 +157,7 @@ export default function TransformationModal({
 
                 <Divider/>
 
-                <Heading>Inputs</Heading>
+                <Heading>Input inventories</Heading>
                 {inputs.map(input => {
                     return (
                         <InputGroup key={input.id}>
@@ -169,7 +169,7 @@ export default function TransformationModal({
                 })}
                 <IconButton icon={<AddOutlineIcon/>} onClick={addNewInput}/>
 
-                <Heading>Outputs</Heading>
+                <Heading>Output inventories</Heading>
                 {outputs.map(output => {
                     return (
                         <InputGroup key={output.id}>
