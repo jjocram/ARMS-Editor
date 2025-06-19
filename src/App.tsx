@@ -257,7 +257,7 @@ function App() {
             .filter((element: Shape) => is(element, "factory:Compatibility"))
             .map((element: Shape) => {
                 const productProperties = new Map<string, string>(element.productProperties?.map((p: Shape) => [p.key, p.value]) ?? []);
-                return new Compatibility(element.id, element.time, element.timeUnit, element.idActivity, element.idExecutor, productProperties, [])
+                return new Compatibility(element.id, element.time, element.timeUnit, element.idActivity, element.idExecutor, productProperties, [], element.batch)
             });
 
         modelerContext.compatibilities.forEach((compatibility: Compatibility) => {
@@ -270,9 +270,9 @@ function App() {
         })
     }
 
-    function setXmlDiagramToEmpty() {
+    function setXmlDiagram(fileName: string) {
         setSimulationResult(null);
-        fetch("/ARMS-Editor/empty_diagram.bpmn")
+        fetch(fileName)
             .then(res => res.text())
             .then(data => modelerRef.current?.importXML(data))
             .catch(err => console.error(err));
@@ -280,7 +280,7 @@ function App() {
 
     useEffect(() => {
         initializeModeler();
-        setXmlDiagramToEmpty();
+        setXmlDiagram("/ARMS-Editor/empty_diagram.bpmn");
     }, []);
 
     useEffect(applyStyleToExecutors, [simulationResult, executorsColorThresholds])
@@ -334,7 +334,7 @@ function App() {
     return (
         <div className="App">
             <ModelerRefContext.Provider value={modelerContext}>
-                <MenuBar setXmlDiagramToEmpty={setXmlDiagramToEmpty}
+                <MenuBar setXmlDiagram={setXmlDiagram}
                          runSimulation={runSimulation}
                          executorsColorThresholds={executorsColorThresholds}
                          setExecutorsColorThresholds={setExecutorsColorThreshold}

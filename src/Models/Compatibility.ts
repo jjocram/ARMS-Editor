@@ -23,9 +23,10 @@ export default class Compatibility extends ExtensionElement {
     idExecutor: string;
     productProperties: Map<string, string>;
     accessories: Array<AccessoryCompatibility>;
+    batch: number
 
 
-    constructor(id: string, time: number, timeUnit: AcceptedTimeUnit, idActivity: string, idExecutor: string, productProperties: Map<string, string>, accessories: Array<AccessoryCompatibility>) {
+    constructor(id: string, time: number, timeUnit: AcceptedTimeUnit, idActivity: string, idExecutor: string, productProperties: Map<string, string>, accessories: Array<AccessoryCompatibility>, batch: number) {
         super(id);
         this.time = time;
         this.timeUnit = timeUnit;
@@ -33,6 +34,7 @@ export default class Compatibility extends ExtensionElement {
         this.idExecutor = idExecutor;
         this.productProperties = productProperties;
         this.accessories = accessories;
+        this.batch = batch;
     }
 
     toTreeNode(): TreeNode {
@@ -67,7 +69,8 @@ export default class Compatibility extends ExtensionElement {
                     id: accessory.id,
                     quantity: accessory.quantity
                 });
-            })
+            }),
+            batch: this.batch
         });
     }
 
@@ -99,6 +102,7 @@ export default class Compatibility extends ExtensionElement {
                 });
             }
         });
+        oldElement.batch = this.batch;
 
         return oldElement;
     }

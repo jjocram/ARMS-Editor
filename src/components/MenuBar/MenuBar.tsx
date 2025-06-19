@@ -9,7 +9,7 @@ import {MetricsOptionsModal} from "../Modals/MetricsOptionModal/MetricsOptionsMo
 import {ExecutorMetricsRanges, TypeOfMetrics} from "../../ExecutorsColorRanges.ts";
 
 interface MenuBarProps {
-    setXmlDiagramToEmpty: () => void
+    setXmlDiagram: (fileName: string) => void
     runSimulation: () => void
     executorsColorThresholds: ExecutorMetricsRanges
     setExecutorsColorThresholds: (executorsColorThresholds: ExecutorMetricsRanges) => void
@@ -67,7 +67,7 @@ export default function MenuBar(props: MenuBarProps) {
         <>
             <ButtonToolbar>
                 <Dropdown title="File" style={dropDownStyle}>
-                    <DropdownItem onSelect={() => props.setXmlDiagramToEmpty()}>New diagram</DropdownItem>
+                    <DropdownItem onSelect={() => props.setXmlDiagram("/ARMS-Editor/empty_diagram.bpmn")}>New diagram</DropdownItem>
                     <DropdownItem onSelect={() => fileInputRef.current?.click()}>Upload diagram <input
                         ref={fileInputRef}
                         type="file" hidden
@@ -90,6 +90,9 @@ export default function MenuBar(props: MenuBarProps) {
                     <DropdownItem onSelect={() => props.setSelectedMetric("queueLength")}>Queue length</DropdownItem>
                     <Dropdown.Separator/>
                     <DropdownItem onSelect={() => setShowMetricsOptionsModal(true)}>Options</DropdownItem>
+                </Dropdown>
+                <Dropdown title="Examples" style={dropDownStyle}>
+                    <DropdownItem onSelect={() => props.setXmlDiagram("/ARMS-Editor/eyeglasses.bpmn")}>Eyeglasses</DropdownItem>
                 </Dropdown>
             </ButtonToolbar>
 

@@ -119,7 +119,7 @@ export function toDataExecutorActivitiesBarChart(metricResult: MetricResult, exe
                     console.log(activityResult)
                     return {
                         id: activityResult.id,
-                        name: activities.get(activityResult.id)?.name ?? "name not found",
+                        name: activities.get(activityResult.id)?.name ?? "Name not found",
                         busyPerProduct: activityResult.processedItems > 0 ? activityResult.busy / activityResult.processedItems : 0,
                         averageTime: activityResult.processedItems > 0 ? (activityResult.busy + activityResult.sumWaitTimeInQueue) / activityResult.processedItems : 0,
                         worstTime: activityResult.processedItems > 0 ? (activityResult.busy / activityResult.processedItems) + activityResult.maxWaitTimeInQueue : 0
@@ -135,7 +135,7 @@ export function toDataActivityExecutorsTimePieChart(metricResult: MetricResult, 
             const execActivity = executor.activities.find((a) => a.id === activity.id)
             return {
                 id: executor.id,
-                name: executors.get(getGenericExecutorId(executor.id))?.name ?? "name not found",
+                name: executors.get(getGenericExecutorId(executor.id))?.name ?? "Name not found",
                 value: execActivity ? execActivity.busy : 0,
             }
         })
@@ -147,7 +147,7 @@ export function toDataActivityExecutorsProductsPieChart(metricResult: MetricResu
             const execActivity = executor.activities.find((a) => a.id === activity.id)
             return {
                 id: executor.id,
-                name: executors.get(getGenericExecutorId(executor.id))?.name ?? "name not found",
+                name: executors.get(getGenericExecutorId(executor.id))?.name ?? "Name not found",
                 value: execActivity ? execActivity.processedItems : 0,
             }
         })
