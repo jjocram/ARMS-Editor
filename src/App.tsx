@@ -342,7 +342,7 @@ function App() {
                          setSelectedMetric={setExecutorsColorMetricSelected}/>
                 <div id="diagramContainer" className="diagramContainer"/>
                 <PropertiesDrawer shape={selectedElement} isOpen={isDrawerOpen} setIsOpen={setDrawerOpen}/>
-                {simulationStatus === "success" &&
+                {simulationStatus === "success" && simulationResult &&
                     <MetricsDrawer simulationResult={simulationResult as MetricResult} shape={singleSelectedElement}/>}
                 <LoadingSimulationModal isOpen={loadingSimulation} setIsOpen={setLoadingSimulation}
                                         status={simulationStatus} errorMessage={simulationError}/>
