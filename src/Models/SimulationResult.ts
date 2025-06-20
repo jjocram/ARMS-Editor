@@ -130,6 +130,9 @@ export function toDataExecutorActivitiesBarChart(metricResult: MetricResult, exe
 }
 
 export function toDataActivityExecutorsTimePieChart(metricResult: MetricResult, activity: BaseElement, executors: Map<string, BaseElement>) {
+    console.log(metricResult);
+    console.log(executors);
+    console.log(getExecutorsOfActivity(metricResult, activity));
     return getExecutorsOfActivity(metricResult, activity)
         .map((executor) => {
             const execActivity = executor.activities.find((a) => a.id === activity.id)
