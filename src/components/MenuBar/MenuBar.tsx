@@ -11,6 +11,7 @@ import {ExecutorMetricsRanges, TypeOfMetrics} from "../../ExecutorsColorRanges.t
 interface MenuBarProps {
     setXmlDiagram: (fileName: string) => void
     runSimulation: () => void
+    loadSimulationResult: (resultFile: string) => void
     executorsColorThresholds: ExecutorMetricsRanges
     setExecutorsColorThresholds: (executorsColorThresholds: ExecutorMetricsRanges) => void
     selectedMetric: TypeOfMetrics
@@ -31,6 +32,11 @@ export default function MenuBar(props: MenuBarProps) {
     const [showProductRequestModal, setShowProductRequestModal] = useState(false);
 
     const [showMetricsOptionsModal, setShowMetricsOptionsModal] = useState(false);
+
+    function fakeRunExample(modelName: string) {
+        props.setXmlDiagram(`/ARMS-Editor/${modelName}.bpmn`)
+        props.loadSimulationResult(`${modelName}_result.json`)
+    }
 
     function downloadDiagram() {
         modelerRef.modeler.current?.saveXML({format: true})
@@ -92,7 +98,9 @@ export default function MenuBar(props: MenuBarProps) {
                     <DropdownItem onSelect={() => setShowMetricsOptionsModal(true)}>Options</DropdownItem>
                 </Dropdown>
                 <Dropdown title="Examples" style={dropDownStyle}>
-                    <DropdownItem onSelect={() => props.setXmlDiagram("/ARMS-Editor/eyeglasses.bpmn")}>Eyeglasses</DropdownItem>
+                    <DropdownItem onSelect={() => fakeRunExample("eyeglasses")}>Eyeglasses</DropdownItem>
+                    <DropdownItem onSelect={() => fakeRunExample("eyeglasses_less_resource")}>Eyeglasses with less resources</DropdownItem>
+                    <DropdownItem onSelect={() => fakeRunExample("woodBooklets")}>Wood booklets</DropdownItem>
                 </Dropdown>
             </ButtonToolbar>
 

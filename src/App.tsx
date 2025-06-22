@@ -35,6 +35,7 @@ import {BaseElement} from "./Models/BaseElement.ts";
 import {ElementLike} from 'diagram-js/lib/model/Types.ts';
 import {getExecutorColorClass} from "./Utils.ts";
 import {ExecutorMetricsRanges, getFromLocalStorageOrDefault, TypeOfMetrics} from "./ExecutorsColorRanges.ts";
+import {timeout} from "d3";
 
 interface ElementEvent {
     element: Shape,
@@ -305,6 +306,23 @@ function App() {
         polygon.style.fillOpacity = fillOpacity;
     }
 
+    function loadSimulationResult(resultFile: string) {
+        setSimulationStatus("loading");
+        setLoadingSimulation(true);
+
+        timeout(() => {
+            fetch(`/ARMS-Editor/${resultFile}`)
+                .then(res => res.text())
+                .then(data => {
+                    const simulationResultReceived: MetricResult = JSON.parse(data);
+                    setSimulationStatus("success");
+                    setLoadingSimulation(false);
+                    setSimulationResult(simulationResultReceived);
+                })
+                .catch(err => console.error(err));
+        }, 2000)
+    }
+
     function runSimulation() {
         setSimulationStatus("loading");
         setLoadingSimulation(true);
@@ -328,7 +346,6 @@ function App() {
                         setSimulationError(err.response.data.message);
                     });
             });
-
     }
 
     return (
@@ -336,6 +353,7 @@ function App() {
             <ModelerRefContext.Provider value={modelerContext}>
                 <MenuBar setXmlDiagram={setXmlDiagram}
                          runSimulation={runSimulation}
+                         loadSimulationResult={loadSimulationResult}
                          executorsColorThresholds={executorsColorThresholds}
                          setExecutorsColorThresholds={setExecutorsColorThreshold}
                          selectedMetric={executorsColorMetricSelected}
