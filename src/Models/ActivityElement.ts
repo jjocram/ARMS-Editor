@@ -5,12 +5,15 @@ import {is} from "bpmn-js/lib/util/ModelUtil";
 import {ExecutorElement} from "./ExecutorElement.ts";
 import {ElementRegistry} from "bpmn-js/lib/features/auto-place/BpmnAutoPlaceUtil";
 import Compatibility from "./Compatibility.ts";
+import {Connection} from "bpmn-js/lib/model/Types";
+import {Element} from "diagram-js/lib/model/Types"
 
 
 export class ActivityElement extends BaseElement {
     static elementTypes: Array<string> = ["bpmn:Task", "factory:Batch"];
 
     connectedExecutors: Array<ExecutorElement>;
+    affinity: string | null = null;
 
     constructor(shape: Shape | null, modeler: Modeler, compatibilities: Array<Compatibility>) {
         super(shape);
@@ -35,5 +38,47 @@ export class ActivityElement extends BaseElement {
 
     override needTransformations(): boolean {
         return true;
+    }
+
+    override needAffinity(): boolean {
+        return true;
+    }
+
+    previousActivities(modeler: Modeler): Array<{label: string, value: string}> {
+        const elementRegistry: ElementRegistry = modeler.get("elementRegistry");
+
+        const precedingActivities: Set<Element> = new Set();
+        const visitedIds = new Set();
+
+        const traverseUpstream = (currentId: string) => {
+            if (visitedIds.has(currentId)) {
+                return;
+            }
+
+            visitedIds.add(currentId);
+
+            const element = elementRegistry.get(currentId);
+
+            if (!element || !element.incoming || element.incoming.length === 0) {
+                return;
+            }
+
+            element.incoming.forEach((flow: Connection) => {
+                const predecessor = flow.source;
+                if (predecessor) {
+                    if (is(predecessor, "bpmn:Task") && predecessor.id !== this.id) {
+                        precedingActivities.add(predecessor);
+                    }
+
+                    traverseUpstream(predecessor.id);
+                }
+            });
+        }
+
+        traverseUpstream(this.id);
+
+
+        console.log(precedingActivities);
+        return Array.from(precedingActivities).map((element: Element) => {return {label: element.businessObject.name ?? `Name undefined (${element.id})`, value: element.id}});
     }
 }

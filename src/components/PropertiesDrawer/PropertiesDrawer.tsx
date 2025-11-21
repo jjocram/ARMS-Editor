@@ -6,7 +6,7 @@ import {
     Grid,
     HStack,
     IconButton,
-    Row,
+    Row, SelectPicker,
     Tree
 } from "rsuite";
 import {useEffect, useState} from "react";
@@ -199,6 +199,31 @@ function PropertiesDrawer({shape, isOpen, setIsOpen}: PropertiesDrawerProps) {
         }
     }
 
+    function handleChangeAffinity(activityId: string | null) {
+        const activityElement = element as ActivityElement;
+        activityElement.affinity = activityId;
+
+        setElement(activityElement);
+    }
+
+    function renderAffinity() {
+        if (element.needAffinity()) {
+            const activityElement = element as ActivityElement;
+            return (
+                <>
+                    <Accordion.Panel header="Affinity">
+                        <SelectPicker data={activityElement.previousActivities(modelerRef.modeler.current!)}
+                                      defaultValue={activityElement.affinity}
+                                      onSelect={handleChangeAffinity}
+                                      onClean={() => handleChangeAffinity(null)} block/>
+                    </Accordion.Panel>
+                </>
+            )
+        } else {
+            return null
+        }
+    }
+
     return (
         <Drawer enforceFocus={false} open={isOpen} onClose={handleSaveElement}>
             <Drawer.Header>
@@ -210,6 +235,7 @@ function PropertiesDrawer({shape, isOpen, setIsOpen}: PropertiesDrawerProps) {
                     <AdditionalInfo element={element} setElement={setElement}/>
                     {renderCompatibilities()}
                     {renderTransformations()}
+                    {renderAffinity()}
                     <ButtonOpenEditor element={element} show={showScriptEditorModal}
                                       setShow={setShowScriptEditorModal}/>
                 </Accordion>

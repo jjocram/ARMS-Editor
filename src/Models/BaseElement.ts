@@ -52,4 +52,8 @@ export class BaseElement {
     additionalInfo(): Array<string> {
         return [];
     }
+
+    needAffinity(): boolean {
+        return false;
+    }
 }
