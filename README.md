@@ -11,6 +11,10 @@ This is the web modeler for ARMS: Activity-Resource Modelling Simulator
 2. Model the process
 3. Download the process file: `File >  Download diagram`
 
+## How to deploy
+1. `npm run build`
+2. `npm run deploy`
+
 ## Acknowledgment
 - The work on the BPMN extension and initial PoC has been carried out by [Roberto Mitugno](https://github.com/robertomitugno) in [this repository](https://github.com/robertomitugno/Bpmn-Thesis).
 - The work on the data visualization has been carried out by [Daniela Fabrizio](https://github.com/DanielaFabrizio) in [this repository](https://github.com/DanielaFabrizio/ARMS-Editor) and then merged with [this pull request](https://github.com/jjocram/ARMS-Editor/pull/1).
