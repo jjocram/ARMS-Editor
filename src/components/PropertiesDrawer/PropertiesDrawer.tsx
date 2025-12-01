@@ -46,6 +46,8 @@ function PropertiesDrawer({shape, isOpen, setIsOpen}: PropertiesDrawerProps) {
 
     const [showScriptEditorModal, setShowScriptEditorModal] = useState<boolean>(false);
 
+    const [, setUpdateState] = useState<boolean>(false); // TODO: remove when improved Context
+
     useEffect(() => {
         if (shape !== null) {
             setSpecificElementFromShape(shape, setElement, modelerRef);
@@ -81,6 +83,12 @@ function PropertiesDrawer({shape, isOpen, setIsOpen}: PropertiesDrawerProps) {
         compatibility.delete(modelerRef.modeler.current!);
 
         modelerRef.compatibilities = modelerRef.compatibilities.filter(c => c.id !== compatibility.id);
+    }
+
+    function handleRemoveTransformation(transformation: Transformation) {
+        transformation.delete(modelerRef.modeler.current!);
+        modelerRef.transformations.delete(transformation.id);
+        setUpdateState((prev) => !prev); // TODO: transformation.delete should trigger the update
     }
 
     function renderLabelForCompatibility(productExecutorString: string) {
@@ -162,15 +170,19 @@ function PropertiesDrawer({shape, isOpen, setIsOpen}: PropertiesDrawerProps) {
         }
 
         return (
-            <Grid fluid>
-                <Row className="show-grid, disable-double-click" onDoubleClick={() => {
-                    const transformation = modelerRef.transformations.get(element.value as string);
-                    setSelectedTransformation(transformation);
-                    setShowTransformationModal(true);
-                }}>
-                    <Col>{dataLabel}</Col>
-                </Row>
-            </Grid>
+            <HStack>
+                <Grid fluid>
+                    <Row className="show-grid, disable-double-click" onDoubleClick={() => {
+                        const transformation = modelerRef.transformations.get(element.value as string);
+                        setSelectedTransformation(transformation);
+                        setShowTransformationModal(true);
+                    }}>
+                        <Col>{dataLabel}</Col>
+                    </Row>
+                </Grid>
+                <IconButton icon={<MinusRoundIcon/>} color="red" appearance="subtle"
+                            onClick={() => handleRemoveTransformation(modelerRef.transformations.get(element.value as string)!)}/>
+            </HStack>
         )
     }
 
