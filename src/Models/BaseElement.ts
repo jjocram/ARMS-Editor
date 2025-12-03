@@ -56,4 +56,8 @@ export class BaseElement {
     needAffinity(): boolean {
         return false;
     }
+
+    needPriority(): boolean {
+        return false;
+    }
 }

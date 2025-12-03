@@ -14,6 +14,7 @@ export class ActivityElement extends BaseElement {
 
     connectedExecutors: Array<ExecutorElement>;
     affinity: string | null = null;
+    priority: string = "0";
 
     constructor(shape: Shape | null, modeler: Modeler, compatibilities: Array<Compatibility>) {
         super(shape);
@@ -41,6 +42,10 @@ export class ActivityElement extends BaseElement {
     }
 
     override needAffinity(): boolean {
+        return true;
+    }
+
+    override needPriority(): boolean {
         return true;
     }
 
@@ -77,8 +82,6 @@ export class ActivityElement extends BaseElement {
 
         traverseUpstream(this.id);
 
-
-        console.log(precedingActivities);
         return Array.from(precedingActivities).map((element: Element) => {return {label: element.businessObject.name ?? `Name undefined (${element.id})`, value: element.id}});
     }
 }

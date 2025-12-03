@@ -1,14 +1,4 @@
-import {
-    Accordion,
-    Button,
-    Col,
-    Drawer,
-    Grid,
-    HStack,
-    IconButton,
-    Row, SelectPicker,
-    Tree
-} from "rsuite";
+import {Accordion, Button, Col, Drawer, Grid, HStack, IconButton, Input, Row, SelectPicker, Tree} from "rsuite";
 import {useEffect, useState} from "react";
 import {useModelerRef} from "../../ModelerContext.ts";
 import {BaseElement} from "../../Models/BaseElement.ts";
@@ -230,9 +220,41 @@ function PropertiesDrawer({shape, isOpen, setIsOpen}: PropertiesDrawerProps) {
                                       onClean={() => handleChangeAffinity(null)} block/>
                     </Accordion.Panel>
                 </>
-            )
+            );
         } else {
-            return null
+            return null;
+        }
+    }
+
+    function handleChangePriority(priority: string | null) {
+        const newPriority = priority ?? '0';
+
+        setElement(prev => {
+            const activity = prev as ActivityElement;
+            return Object.assign(
+                Object.create(Object.getPrototypeOf(activity)),
+                activity,
+                {priority: newPriority}
+            );
+        });
+    }
+
+    function renderPriority() {
+        if (element.needPriority()) {
+            const activityElement = element as ActivityElement;
+            return (
+                <>
+                    <Accordion.Panel header="Priority">
+                        <Input
+                            placeholder="Priority"
+                            value={activityElement.priority}
+                            onChange={handleChangePriority}
+                            />
+                    </Accordion.Panel>
+                </>
+            );
+        } else {
+            return null;
         }
     }
 
@@ -248,6 +270,7 @@ function PropertiesDrawer({shape, isOpen, setIsOpen}: PropertiesDrawerProps) {
                     {renderCompatibilities()}
                     {renderTransformations()}
                     {renderAffinity()}
+                    {renderPriority()}
                     <ButtonOpenEditor element={element} show={showScriptEditorModal}
                                       setShow={setShowScriptEditorModal}/>
                 </Accordion>
