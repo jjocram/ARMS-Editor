@@ -27,14 +27,13 @@ export default function ScriptEditorModal({show, setShow, element}: ScriptEditor
         element.save(modelContext.modeler.current!);
         setShow(false);
     }
-
     return (
         <Modal open={show} onClose={close} size="lg">
             <Modal.Header>
                 <Modal.Title>Script for {element.name}</Modal.Title>
             </Modal.Header>
 
-            <Editor height="80vh" defaultLanguage="kotlin" defaultValue="// some comment" onMount={handleEditorDidMount}/>
+            <Editor height="80vh" defaultLanguage="kotlin" defaultValue={element.script ?? "// a comment"} onMount={handleEditorDidMount}/>
 
             <Modal.Footer>
                 <Button onClick={close}>Save</Button>

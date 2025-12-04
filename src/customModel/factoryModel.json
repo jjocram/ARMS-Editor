@@ -267,6 +267,17 @@
           "isMany": true
         }
       ]
+    },
+    {
+      "name": "SequenceFlow",
+      "extends": ["bpmn:SequenceFlow"],
+      "properties": [
+        {
+          "name": "script",
+          "isAttr": true,
+          "type": "String"
+        }
+      ]
     }
   ],
   "enumerations": [],
